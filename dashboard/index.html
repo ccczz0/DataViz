@@ -27,6 +27,8 @@
   --shadow: 0 2px 6px rgba(0,0,0,.04), 0 18px 48px rgba(0,0,0,.08);
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Inter", "Noto Sans Thai", "Sukhumvit Set", "Thonburi", "Leelawadee UI", sans-serif;
   --nav: 52px;
+  --lens: clamp(380px, 62vh, 560px);   /* chart height in a stage */
+  --fx: 104px;                          /* frame chrome: progress row + caption under the chart */
   --sec: #ffffff;         /* background of the current section (dock uses it on small screens) */
   --ease: cubic-bezier(.65, 0, .35, 1);
   --ease-out: cubic-bezier(.16, 1, .3, 1);
@@ -44,7 +46,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; letter-spacing: -0.022em; }
 p { margin: 0; }
 .tnum { font-variant-numeric: tabular-nums; }
-.wrap { max-width: 1080px; margin: 0 auto; }
+.wrap { max-width: 1180px; margin: 0 auto; }
 .band { --sec: var(--band); margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); background: var(--band); }
 section { padding-block: clamp(72px, 11vw, 140px); }
 .eyebrow { font-size: 17px; font-weight: 600; color: var(--orange); }
@@ -103,31 +105,32 @@ select:focus-visible, .pill:focus-visible, summary:focus-visible { outline: 2px 
 .spec.hot .v { color: var(--orange); }
 
 /* ---------- STAGE (reel) */
-.stage-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 48px; margin-top: 56px; align-items: start; }
-.dock { position: sticky; top: calc(var(--nav) + env(safe-area-inset-top, 0px) + 20px); z-index: 3; min-width: 0; }
+.stage-grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 56px; margin-top: 56px; align-items: start; }
+/* chart parks in the middle of the screen while the captions scroll; it leaves together with the last caption */
+.dock { position: sticky; top: max(calc(var(--nav) + env(safe-area-inset-top, 0px) + 16px), calc(50vh - (var(--lens) + var(--fx)) / 2)); z-index: 3; min-width: 0; }
 .frame { position: relative; background: var(--card); border-radius: 30px; box-shadow: var(--shadow); overflow: hidden; min-width: 0; }
 .hud { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 16px 20px 0; position: relative; z-index: 3; }
 .hud .tag { font-size: 12px; font-weight: 600; color: var(--fg-2); letter-spacing: .02em; }
 .hud .prog { display: flex; gap: 5px; }
 .hud .prog i { width: 18px; height: 4px; border-radius: 2px; background: var(--grid); transition: background .4s, width .4s var(--ease); }
 .hud .prog i.on { background: var(--fg); width: 30px; }
-.lens { position: relative; height: clamp(300px, 60vh, 440px); overflow: hidden; contain: paint; }
+.lens { position: relative; height: var(--lens); overflow: hidden; contain: paint; }
 .camera { position: absolute; inset: 0; transform-origin: var(--ox, 50%) var(--oy, 50%); transform: scale(var(--cs, 1)); transition: transform 1.15s var(--ease), transform-origin 1.15s var(--ease); will-change: transform; }
 .layer { position: absolute; inset: 0; padding: 4px 10px 6px; opacity: 0; transform: scale(1.12); filter: blur(10px); pointer-events: none;
   transition: opacity .7s var(--ease), transform .9s var(--ease), filter .7s var(--ease); }
 .layer.on { opacity: 1; transform: none; filter: none; pointer-events: auto; }
 .layer.out { transform: scale(.9); }
 .layer .chart { width: 100%; height: 100%; }
-.lower { position: absolute; left: 18px; bottom: 16px; z-index: 4; max-width: calc(100% - 36px); background: rgba(29,29,31,.88); color: #fff; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+.lower { position: relative; display: block; width: fit-content; max-width: calc(100% - 36px); margin: 4px 18px 18px; background: rgba(29,29,31,.9); color: #fff;
   border-radius: 14px; padding: 9px 14px; font-size: 14px; font-weight: 500; line-height: 1.35; transition: transform .55s var(--ease-out), opacity .4s; }
 .lower:empty { display: none; }
-.lower.swap { transform: translateY(140%); opacity: 0; transition-duration: .25s; }
+.lower.swap { transform: translateY(30%); opacity: 0; transition-duration: .25s; }
 .lower b { color: #ffb08f; font-weight: 600; }
 .flash { position: absolute; inset: 0; z-index: 5; background: #fff; opacity: 0; pointer-events: none; }
 .flash.go { animation: flash .45s ease-out; }
 @keyframes flash { 0% { opacity: .55; } 100% { opacity: 0; } }
 
-.steps { display: flex; flex-direction: column; gap: 34vh; padding-block: 12vh 34vh; min-width: 0; }
+.steps { display: flex; flex-direction: column; gap: 38vh; padding-block: max(40px, calc((var(--lens) + var(--fx)) / 2 - 110px)); min-width: 0; }
 .step { padding: 4px 0 4px 22px; border-left: 3px solid var(--grid); transition: border-color .5s var(--ease); }
 .step > * { transition: opacity .6s var(--ease-out), transform .7s var(--ease-out); opacity: .28; transform: translateX(-10px); }
 .step.on { border-color: var(--orange); }
@@ -150,7 +153,7 @@ select:focus-visible, .pill:focus-visible, summary:focus-visible { outline: 2px 
 .play h3 { font-size: 24px; letter-spacing: -0.025em; }
 .play p { color: var(--fg-2); font-size: 16px; line-height: 1.55; }
 .timeline { margin-top: 56px; }
-.timeline svg { width: 100%; height: 70px; display: block; overflow: visible; }
+.timeline svg { width: 100%; height: 84px; display: block; overflow: visible; }
 .timeline .draw { stroke-dasharray: 1000; stroke-dashoffset: 1000; transition: stroke-dashoffset 1.6s var(--ease); }
 .timeline.in .draw { stroke-dashoffset: 0; }
 .timeline .pop { transform-box: fill-box; transform-origin: center; transform: scale(0); transition: transform .5s var(--ease-out); }
@@ -180,9 +183,9 @@ footer { padding-block: 28px 56px; border-top: 1px solid var(--hair); font-size:
   .dock { top: calc(var(--nav) + env(safe-area-inset-top, 0px)); background: var(--sec);
     margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding: 10px max(16px, env(safe-area-inset-right, 0px)) 14px max(16px, env(safe-area-inset-left, 0px)); }
   .frame { max-width: 760px; margin-inline: auto; border-radius: 24px; }
-  .lens { height: clamp(230px, 42vh, 480px); }
-  .lower { position: relative; left: auto; bottom: auto; display: block; width: fit-content; max-width: calc(100% - 24px); margin: 0 12px 12px; }
-  .steps { gap: 62vh; padding-block: 8vh 60vh; max-width: 640px; width: 100%; margin-inline: auto; position: relative; z-index: 1; }
+  :root { --lens: clamp(230px, 42vh, 480px); }
+  .lower { max-width: calc(100% - 24px); margin: 0 12px 12px; }
+  .steps { gap: 62vh; padding-block: 8vh 6vh; max-width: 640px; width: 100%; margin-inline: auto; position: relative; z-index: 1; }
   .step { background: var(--card); border-radius: 0 18px 18px 0; padding: 18px 20px; box-shadow: var(--shadow); }
   .band .step { box-shadow: 0 2px 6px rgba(0,0,0,.04), 0 10px 30px rgba(0,0,0,.06); }
   .step > * { opacity: .55; transform: none; }
@@ -194,10 +197,10 @@ footer { padding-block: 28px 56px; border-top: 1px solid var(--hair); font-size:
   .callout { margin-top: 28px; }
 }
 @supports (height: 1svh) {
-  .lens { height: clamp(300px, 60svh, 440px); }
+  :root { --lens: clamp(380px, 62svh, 560px); }
   @media (max-width: 1023px) {
-    .lens { height: clamp(230px, 42svh, 480px); }
-    .steps { gap: 62svh; padding-block: 8svh 60svh; }
+    :root { --lens: clamp(230px, 42svh, 480px); }
+    .steps { gap: 62svh; padding-block: 8svh 6svh; }
   }
 }
 @media (max-width: 1023px) and (min-width: 700px) {   /* iPad portrait */
@@ -226,9 +229,9 @@ footer { padding-block: 28px 56px; border-top: 1px solid var(--hair); font-size:
 @media (max-width: 1023px) and (orientation: landscape) and (max-height: 560px) {
   .stage-grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 24px; }
   .dock { top: calc(var(--nav) + env(safe-area-inset-top, 0px) + 8px); background: transparent; margin-inline: 0; padding: 0; }
-  .lens { height: max(190px, calc(100vh - var(--nav) - 92px)); }
+  :root { --lens: max(170px, calc(100vh - var(--nav) - 150px)); --fx: 96px; }
   .lower { margin: 0 10px 10px; font-size: 12.5px; }
-  .steps { gap: 60vh; padding-block: 20vh 50vh; }
+  .steps { gap: 60vh; padding-block: 10vh 6vh; }
   .step .n { font-size: 34px; } .step h3 { font-size: 17px; } .step p { font-size: 14px; }
   .hero-stat { font-size: 26vh; }
 }
@@ -312,7 +315,7 @@ footer { padding-block: 28px 56px; border-top: 1px solid var(--hair); font-size:
   <section class="wrap" aria-labelledby="pbH">
     <span class="eyebrow b">So what · CRM Playbook</span>
     <h2 class="h-lg lit" id="pbH" style="margin-top:8px">สามจังหวะที่ทีม CRM ควรลงมือ</h2>
-    <div class="timeline fx" id="tlWrap" aria-hidden="true"><svg id="tl" viewBox="0 0 1000 70"></svg></div>
+    <div class="timeline fx" id="tlWrap" aria-hidden="true"><svg id="tl" viewBox="0 0 1000 84"></svg></div>
     <div class="plays" id="plays"></div>
     <details>
       <summary>ข้อมูล นิยาม และการทำความสะอาดข้อมูล</summary>
@@ -432,44 +435,47 @@ footer { padding-block: 28px 56px; border-top: 1px solid var(--hair); font-size:
   // ---------- chart builders
   const B = {
     hist(d, mode) {
-      const g = d.gap, early = mode === "early";
-      return { ...A, grid: { left: 44, right: 18, top: 34, bottom: 46 },
+      const g = d.gap, early = mode === "early", n = g.counts.length;
+      return { ...A, grid: { left: 48, right: 18, top: 40, bottom: 50 },
         tooltip: { ...tip, trigger: "axis", axisPointer: { type: "none" }, formatter: ps => { const i = ps[0].dataIndex; return `<b>${g.bins[i]} วัน</b><br>${fmt(g.counts[i])} คน · สะสม ${fmt(g.cum_pct[i], 1)}%`; } },
-        xAxis: { type: "category", data: g.bins_end.map(v => v - 15), axisLabel: { ...ax, interval: 3 }, axisLine, axisTick: { show: false }, ...xName("วันหลังซื้อครั้งแรก") },
-        yAxis: { type: "value", axisLabel: ax, splitLine: split },
-        series: [{ type: "bar", barCategoryGap: "12%", animationDelay: i => i * 22,
+        xAxis: { type: "category", data: g.bins_end.map(v => v - 15), min: 0, max: early ? 7 : n - 1, axisLabel: { ...ax, interval: early ? 0 : 3 }, axisLine, axisTick: { show: false }, ...xName("วันหลังซื้อครั้งแรก") },
+        yAxis: { type: "value", min: 0, max: v => Math.ceil(v.max / 50) * 50, axisLabel: ax, splitLine: split },
+        series: [{ type: "bar", barCategoryGap: "14%", animationDelay: i => i * 22,
           data: g.counts.map((c, i) => ({ value: c, itemStyle: { color: early ? (i < 2 ? C.orange : C.dim) : C.blue, borderRadius: [5, 5, 0, 0] } })),
-          label: early ? lab({ position: "top", formatter: x => x.dataIndex < 2 ? fmt(x.value) : "" }) : { show: false } }] };
+          label: lab({ show: early, position: "top", formatter: x => x.dataIndex < 2 ? fmt(x.value) + " คน" : "" }) }] };
     },
     cdf(d, mode) {
-      const g = d.gap, tail = mode === "tail";
+      // modes: full (whole year, no marks) → p50 (zoom to first 180 days) → tail (whole year + the 25% still to come)
+      const g = d.gap, tail = mode === "tail", p50 = mode === "p50", full = mode === "full";
       const pts = g.cdf.map((v, i) => [i * 3, v]);
-      const ok = g.p50 != null;
-      return { ...A, grid: { left: 46, right: 22, top: 34, bottom: 46 },
+      const ok = g.p50 != null, xmax = p50 ? 180 : 360;
+      const marks = [];
+      if (!full && ok) marks.push({ coord: [g.p50, 50], name: `50% · ${g.p50} วัน`, itemStyle: { color: "#fff", borderColor: tail ? C.fg3 : C.orange, borderWidth: 3 }, label: { position: "top" } });
+      if (tail && g.p75 != null) marks.push({ coord: [g.p75, 75], name: `75% · ${g.p75} วัน`, itemStyle: { color: "#fff", borderColor: C.orange, borderWidth: 3 }, label: { position: "left", distance: 10 } });
+      return { ...A, grid: { left: 52, right: 26, top: 40, bottom: 50 },
         tooltip: { ...tip, trigger: "axis", formatter: ps => `<b>ภายใน ${ps[0].value[0]} วัน</b><br>กลับมาแล้ว ${fmt(ps[0].value[1], 1)}% ของคนที่ซื้อซ้ำ` },
-        xAxis: { type: "value", min: 0, max: 360, interval: 60, axisLabel: ax, axisLine, splitLine: { show: false }, ...xName("วันหลังซื้อครั้งแรก") },
+        xAxis: { type: "value", min: 0, max: xmax, interval: p50 ? 30 : 60, axisLabel: ax, axisLine, splitLine: { show: false }, ...xName("วันหลังซื้อครั้งแรก") },
         yAxis: { type: "value", min: 0, max: 100, interval: 25, axisLabel: { ...ax, formatter: v => v + "%" }, splitLine: split },
         series: [{ type: "line", data: pts, showSymbol: false, smooth: .2, lineStyle: { width: 3, color: C.blue }, areaStyle: { color: grad("42,120,214", .22) },
-          markPoint: ok ? { symbol: "circle", symbolSize: 14, itemStyle: { color: "#fff", borderColor: tail ? C.fg3 : C.orange, borderWidth: 3 },
-            label: { show: true, position: "top", distance: 10, color: C.fg, fontWeight: 600, fontSize: 13, fontFamily: C.font, formatter: p => p.name },
-            data: [{ coord: [g.p50, 50], name: `50% · ${g.p50} วัน` }].concat(tail && g.p75 != null ? [{ coord: [g.p75, 75], name: `75% · ${g.p75} วัน`, itemStyle: { color: "#fff", borderColor: C.orange, borderWidth: 3 }, label: { position: "left", distance: 10 } }] : []) } : undefined,
-          markLine: ok ? { silent: true, symbol: "none", lineStyle: { type: [4, 4], color: C.fg3 }, label: { show: false }, data: [[{ coord: [g.p50, 0] }, { coord: [g.p50, 50] }], [{ coord: [0, 50] }, { coord: [g.p50, 50] }]] } : undefined,
-          // tail: shade the gap between the curve's 75% level and 100% — the quarter of returners still to come
-          markArea: tail && g.p75 != null ? { silent: true, itemStyle: { color: "rgba(235,104,52,.12)", borderColor: C.orange, borderWidth: 1, borderType: [4, 4] },
+          markPoint: { symbol: "circle", symbolSize: 14, label: { show: true, distance: 10, color: C.fg, fontWeight: 600, fontSize: 13, fontFamily: C.font, formatter: p => p.name }, data: marks },
+          markLine: { silent: true, symbol: "none", lineStyle: { type: [4, 4], color: C.fg3 }, label: { show: false }, data: !full && ok ? [[{ coord: [g.p50, 0] }, { coord: [g.p50, 50] }], [{ coord: [0, 50] }, { coord: [g.p50, 50] }]] : [] },
+          markArea: { silent: true, itemStyle: { color: "rgba(235,104,52,.12)", borderColor: C.orange, borderWidth: 1, borderType: [4, 4] },
             label: { show: true, position: "insideTopLeft", distance: 8, color: C.orange, fontWeight: 600, fontSize: 12.5, lineHeight: 17, fontFamily: C.font },
-            data: [[{ coord: [g.p75, 75], name: `อีก 25% ยังไม่กลับมา\nทยอยมาหลังวันที่ ${g.p75}` }, { coord: [360, 100] }]] } : undefined }] };
+            data: tail && g.p75 != null ? [[{ coord: [g.p75, 75], name: `อีก 25% ยังไม่กลับมา\nทยอยมาหลังวันที่ ${g.p75}` }, { coord: [360, 100] }]] : [] } }] };
     },
     volume(d, mode) {
-      const m = d.monthly, lbl = m.months.map(monthLbl), ret = mode === "returning";
-      return { ...A, grid: { left: 44, right: 12, top: 34, bottom: 40 },
+      // returning: zoom to the last 11 months and un-stack, so the orange repeat-purchase bars are big enough to read
+      const m = d.monthly, lbl = m.months.map(monthLbl), ret = mode === "returning", n = m.months.length;
+      const rmax = Math.max(...m.returning.slice(n - 11));
+      return { ...A, grid: { left: 48, right: 14, top: 40, bottom: 40 },
         tooltip: { ...tip, trigger: "axis", axisPointer: shadowPtr, formatter: ps => { const i = ps[0].dataIndex, t = m.new[i] + m.returning[i]; return `<b>${lbl[i]}</b><br>ลูกค้าใหม่ ${fmt(m.new[i])}<br>ซื้อซ้ำ ${fmt(m.returning[i])} (${fmt(t ? 100 * m.returning[i] / t : 0, 1)}%)<br>รายได้ ${brl(m.revenue[i])}`; } },
-        legend: { top: 2, right: 10, itemWidth: 11, itemHeight: 11, textStyle: { color: C.fg2, fontSize: 12, fontFamily: C.font }, data: [{ name: "ลูกค้าใหม่", icon: "roundRect" }, { name: "ซื้อซ้ำ", icon: "roundRect" }] },
-        xAxis: { type: "category", data: lbl, axisLabel: { ...ax, interval: NARROW() ? 3 : 2 }, axisLine, axisTick: { show: false } },
-        yAxis: { type: "value", axisLabel: { ...ax, formatter: v => v >= 1000 ? v / 1000 + "k" : v }, splitLine: split },
+        legend: { top: 4, right: 10, itemWidth: 11, itemHeight: 11, textStyle: { color: C.fg2, fontSize: 12, fontFamily: C.font }, data: [{ name: "ลูกค้าใหม่", icon: "roundRect" }, { name: "ซื้อซ้ำ", icon: "roundRect" }] },
+        xAxis: { type: "category", data: lbl, min: ret ? n - 11 : 0, max: n - 1, axisLabel: { ...ax, interval: ret ? (NARROW() ? 1 : 0) : (NARROW() ? 3 : 2) }, axisLine, axisTick: { show: false } },
+        yAxis: { type: "value", min: 0, max: ret ? Math.ceil(rmax * 1.5 / 50) * 50 : (v => Math.ceil(v.max / 1000) * 1000), axisLabel: { ...ax, formatter: v => v >= 1000 ? v / 1000 + "k" : v }, splitLine: split },
         series: [
-          { name: "ลูกค้าใหม่", type: "bar", stack: "t", data: m.new, barCategoryGap: "26%", itemStyle: { color: ret ? C.dim : C.blue, borderColor: "#fff", borderWidth: 1 }, animationDelay: i => i * 30 },
-          { name: "ซื้อซ้ำ", type: "bar", stack: "t", data: m.returning, itemStyle: { color: C.orange, borderRadius: [4, 4, 0, 0], borderColor: "#fff", borderWidth: 1 }, animationDelay: i => 300 + i * 30,
-            label: ret ? lab({ position: "top", fontSize: 11, color: C.orange, formatter: x => [13, 16, 19].includes(x.dataIndex) ? fmt(x.value) : "" }) : { show: false } },
+          { name: "ลูกค้าใหม่", type: "bar", stack: ret ? "a" : "t", data: m.new, barGap: "8%", barCategoryGap: ret ? "34%" : "26%", itemStyle: { color: ret ? C.dim : C.blue, borderColor: "#fff", borderWidth: 1, opacity: ret ? .55 : 1 }, animationDelay: i => i * 30 },
+          { name: "ซื้อซ้ำ", type: "bar", stack: ret ? "b" : "t", data: m.returning, itemStyle: { color: C.orange, borderRadius: [4, 4, 0, 0], borderColor: "#fff", borderWidth: 1 }, animationDelay: i => 300 + i * 30,
+            label: lab({ show: ret, position: "top", fontSize: 11.5, color: C.fg, formatter: x => x.dataIndex >= n - 11 ? fmt(x.value) : "" }) },
         ] };
     },
     late(d) {
@@ -485,17 +491,19 @@ footer { padding-block: 28px 56px; border-top: 1px solid var(--hair); font-size:
             data: peaks.map(i => ({ coord: [i, m.late_pct[i]], name: `${lbl[i]} · ${fmt(m.late_pct[i], 1)}%` })) } }] };
     },
     review(d, mode) {
-      const m = d.monthly, lbl = m.months.map(monthLbl);
+      // full → mark: the axis zooms into Sep 2017 – May 2018 so both dips fill the frame
+      const m = d.monthly, lbl = m.months.map(monthLbl), n = m.months.length;
       const vals = m.avg_review.filter(v => v != null);
       const lo = Math.floor(Math.min(...vals) * 10 - 1) / 10, hi = Math.ceil(Math.max(...vals) * 10 + 1) / 10;
-      const i0 = m.months.indexOf("2017-11"), i1 = m.months.indexOf("2018-02");
+      const i0 = m.months.indexOf("2017-11"), i1 = m.months.indexOf("2018-02"), zoom = mode === "mark";
       const narrow = innerWidth < 600;
-      const areas = mode === "mark" ? [[{ xAxis: i0, name: narrow ? "" : "Black Friday" }, { xAxis: i0 + 1 }], [{ xAxis: i1, name: narrow ? "ส่งช้า" : "ส่งช้าพุ่ง" }, { xAxis: i1 + 1 }]] : [];
-      return { ...A, grid: { left: 48, right: 16, top: 40, bottom: 40 },
+      const areas = i0 >= 0 && i1 >= 0 ? [[{ xAxis: i0, name: narrow && !zoom ? "" : "Black Friday" }, { xAxis: i0 + 1 }], [{ xAxis: i1, name: narrow && !zoom ? "ส่งช้า" : "ส่งช้าพุ่ง" }, { xAxis: i1 + 1 }]] : [];
+      return { ...A, grid: { left: 52, right: 18, top: 44, bottom: 40 },
         tooltip: { ...tip, trigger: "axis", formatter: ps => { const i = ps[0].dataIndex; return `<b>${lbl[i]}</b><br>รีวิวเฉลี่ย ${fmt(m.avg_review[i], 2)}★<br>ส่งช้า ${fmt(m.late_pct[i], 1)}%`; } },
-        xAxis: { type: "category", data: lbl, boundaryGap: false, axisLabel: { ...ax, interval: NARROW() ? 3 : 2 }, axisLine, axisTick: { show: false } },
+        xAxis: { type: "category", data: lbl, boundaryGap: false, min: zoom ? Math.max(0, i0 - 2) : 0, max: zoom ? Math.min(n - 1, i1 + 3) : n - 1, axisLabel: { ...ax, interval: zoom ? 0 : (NARROW() ? 3 : 2) }, axisLine, axisTick: { show: false } },
         yAxis: { type: "value", min: lo, max: hi, interval: .1, axisLabel: { ...ax, formatter: v => v.toFixed(1) + "★" }, splitLine: split },
-        series: [{ type: "line", data: m.avg_review, smooth: .25, symbol: "circle", symbolSize: 7, lineStyle: { width: 3, color: C.blue }, itemStyle: { color: C.blue, borderColor: "#fff", borderWidth: 2 },
+        series: [{ type: "line", data: m.avg_review, smooth: .25, symbol: "circle", symbolSize: zoom ? 10 : 7, lineStyle: { width: zoom ? 4 : 3, color: C.blue }, itemStyle: { color: C.blue, borderColor: "#fff", borderWidth: 2 },
+          label: lab({ show: zoom, position: "bottom", distance: 8, fontSize: 12, formatter: x => fmt(x.value, 2) }),
           markArea: { silent: true, itemStyle: { color: "rgba(235,104,52,.12)" }, label: { show: true, position: "insideTop", distance: 6, color: C.orange, fontWeight: 600, fontSize: 12, fontFamily: C.font }, data: areas } }] };
     },
     seg(d) {
@@ -520,17 +528,17 @@ footer { padding-block: 28px 56px; border-top: 1px solid var(--hair); font-size:
           label: lab({ position: "right", formatter: x => "R$" + fmt(x.value) }) }] };
     },
     pareto(d, mode) {
-      const pts = d.pareto.curve.map((v, i) => [i * 2, v]), top = d.pareto.top10_rev_pct;
-      return { ...A, grid: { left: 46, right: 24, top: 34, bottom: 46 },
+      const pts = d.pareto.curve.map((v, i) => [i * 2, v]), top = d.pareto.top10_rev_pct, zoom = mode === "top";
+      return { ...A, grid: { left: 52, right: 28, top: 40, bottom: 50 },
         tooltip: { ...tip, trigger: "axis", formatter: ps => { const p = ps.find(x => x.seriesIndex === 1) || ps[0]; return `<b>ลูกค้า top ${p.value[0]}%</b><br>ทำรายได้ ${fmt(p.value[1], 1)}% ของทั้งหมด`; } },
-        xAxis: { type: "value", min: 0, max: 100, interval: 20, axisLabel: { ...ax, formatter: v => v + "%" }, axisLine, splitLine: { show: false }, ...xName("% ลูกค้า (เรียงจากใช้จ่ายมากไปน้อย)") },
-        yAxis: { type: "value", min: 0, max: 100, interval: 25, axisLabel: { ...ax, formatter: v => v + "%" }, splitLine: split },
+        xAxis: { type: "value", min: 0, max: zoom ? 30 : 100, interval: zoom ? 5 : 20, axisLabel: { ...ax, formatter: v => v + "%" }, axisLine, splitLine: { show: false }, ...xName("% ลูกค้า (เรียงจากใช้จ่ายมากไปน้อย)") },
+        yAxis: { type: "value", min: 0, max: zoom ? 70 : 100, interval: zoom ? 10 : 25, axisLabel: { ...ax, formatter: v => v + "%" }, splitLine: split },
         series: [
           { type: "line", data: [[0, 0], [100, 100]], showSymbol: false, lineStyle: { color: C.mute, type: [5, 5], width: 1.5 }, silent: true, z: 1,
-            markPoint: { symbol: "rect", symbolSize: 0, label: { show: true, color: C.fg3, fontSize: 11.5, fontFamily: C.font, formatter: "เส้นที่ทุกคนจ่ายเท่ากัน" }, data: [{ coord: [72, 64] }] } },
+            markPoint: { symbol: "rect", symbolSize: 0, label: { show: true, color: C.fg3, fontSize: 11.5, fontFamily: C.font, formatter: "เส้นที่ทุกคนจ่ายเท่ากัน" }, data: zoom ? [] : [{ coord: [72, 64] }] } },
           { type: "line", data: pts, showSymbol: false, smooth: .2, lineStyle: { width: 3, color: C.orange }, z: 2, areaStyle: { color: grad("235,104,52", .18) },
             markPoint: { symbol: "circle", symbolSize: 14, itemStyle: { color: "#fff", borderColor: C.orange, borderWidth: 3 },
-              label: { show: true, position: mode === "top" ? "right" : "top", distance: 10, color: C.fg, fontSize: 13, fontWeight: 600, fontFamily: C.font, formatter: `top 10% → ${fmt(top, 0)}%` }, data: [{ coord: [10, top] }] } },
+              label: { show: true, position: zoom ? "right" : "top", distance: 10, color: C.fg, fontSize: 13, fontWeight: 600, fontFamily: C.font, formatter: `top 10% → ${fmt(top, 0)}%` }, data: [{ coord: [10, top] }] } },
         ] };
     },
     delay(d, mode) {
@@ -575,8 +583,8 @@ footer { padding-block: 28px 56px; border-top: 1px solid var(--hair); font-size:
   const SCRIPTS = {
     q1: { title: "Q1", layers: ["hist", "cdf"], steps: d => { const g = d.gap; return [
       { layer: "hist", mode: "all", cam: [1, 50, 50], n: fmt(g.n), c: "b", h: "คนที่กลับมาซื้อครั้งที่ 2", p: "แต่ละแท่งคือจำนวนลูกค้าที่กลับมาซื้อซ้ำ แยกตามจำนวนวันนับจากการซื้อครั้งแรก ช่วงละ 15 วัน", cap: `ลูกค้าซื้อซ้ำ <b>${fmt(g.n)}</b> คน จาก ${fmt(d.kpi.customers)} คน` },
-      { layer: "hist", mode: "early", cam: [1.7, 8, 30], n: fmt(g.within_30, 0) + "%", c: "o", h: "กลับมาภายใน 30 วันแรก", p: "สองแท่งแรกสูงกว่าแท่งอื่นชัดเจน เดือนแรกหลังซื้อคือช่วงที่ลูกค้ากลับมาหนาแน่นที่สุด", cap: `<b>${fmt(g.within_30, 0)}%</b> กลับมาในเดือนแรก` },
-      { layer: "cdf", mode: "p50", cam: [1.35, 22, 46], n: fmt(g.p50) + " วัน", c: "b", h: "ครึ่งหนึ่งกลับมาภายในช่วงนี้", p: `เปลี่ยนมาดูแบบสะสม เส้นแตะ 50% ที่วันที่ ${fmt(g.p50)} โปรโมชันที่ส่งหลังจุดนี้พลาดคนที่ตั้งใจจะกลับมาไปแล้วครึ่งหนึ่ง`, cap: `มัธยฐาน <b>${fmt(g.p50)} วัน</b>` },
+      { layer: "hist", mode: "early", n: fmt(g.within_30, 0) + "%", c: "o", h: "กลับมาภายใน 30 วันแรก", p: "ซูมเข้าช่วง 4 เดือนแรก สองแท่งแรก (0–30 วัน) สูงกว่าแท่งอื่นชัดเจน เดือนแรกหลังซื้อคือช่วงที่ลูกค้ากลับมาหนาแน่นที่สุด", cap: `<b>${fmt(g.within_30, 0)}%</b> กลับมาในเดือนแรก` },
+      { layer: "cdf", mode: "p50", pre: "full", n: fmt(g.p50) + " วัน", c: "b", h: "ครึ่งหนึ่งกลับมาภายในช่วงนี้", p: `เปลี่ยนมาดูแบบสะสม เส้นแตะ 50% ที่วันที่ ${fmt(g.p50)} โปรโมชันที่ส่งหลังจุดนี้พลาดคนที่ตั้งใจจะกลับมาไปแล้วครึ่งหนึ่ง`, cap: `มัธยฐาน <b>${fmt(g.p50)} วัน</b>` },
       { layer: "cdf", mode: "tail", cam: [1, 50, 50], n: "25%", c: "o", h: `กลับมาช้ากว่าวันที่ ${fmt(g.p75)}`, p: `เส้นนี้เป็นยอดสะสม จึงขึ้นอย่างเดียว ความชันคือจำนวนคนที่กลับมาต่อวัน ช่วงแรกชันมาก แต่หลังวันที่ ${fmt(g.p75)} เส้นเกือบแบน อีก 25% ที่เหลือ (ช่องสีส้มถึงเส้น 100%) ทยอยมาทีละน้อยตลอดครึ่งปีถัดไป รอให้กลับมาเองไม่คุ้ม ต้องใช้แคมเปญ win-back`, cap: `อีก <b>25%</b> มาช้ากว่าวันที่ ${fmt(g.p75)}` },
     ]; } },
     trend: { title: "TREND", layers: ["volume", "late", "review"], steps: d => { const m = d.monthly;
@@ -585,9 +593,9 @@ footer { padding-block: 28px 56px; border-top: 1px solid var(--hair); font-size:
       const mn = m.avg_review.reduce((b, v, i) => v != null && v < (m.avg_review[b] ?? 9) ? i : b, 0);
       return [
       { layer: "volume", mode: "all", cam: [1, 50, 50], n: fmt(tN + tR), c: "b", h: "การซื้อตลอด 20 เดือน", p: "ยอดโตจากหลักร้อยต่อเดือนต้นปี 2017 ขึ้นไปเกิน 6,000 ต่อเดือนในปี 2018 และพุ่งชัดที่ Black Friday พ.ย. 2017", cap: "ยอดซื้อโตต่อเนื่องเกือบทุกเดือน" },
-      { layer: "volume", mode: "returning", cam: [1.8, 80, 30], n: fmt(100 * tR / (tN + tR || 1), 1) + "%", c: "o", h: "ของการซื้อมาจากลูกค้าเก่า", p: "ซูมดูส่วนสีส้มบนยอดแท่ง นั่นคือการซื้อซ้ำทั้งหมด การเติบโตแทบทั้งหมดมาจากการหาลูกค้าใหม่", cap: `ซื้อซ้ำแค่ <b>${fmt(tR)}</b> ครั้ง` },
+      { layer: "volume", mode: "returning", n: fmt(100 * tR / (tN + tR || 1), 1) + "%", c: "o", h: "ของการซื้อมาจากลูกค้าเก่า", p: "ซูมดู 11 เดือนหลัง แท่งส้มคือการซื้อซ้ำ เดือนละไม่ถึง 250 ครั้ง ส่วนแท่งเทาคือลูกค้าใหม่ซึ่งสูงจนเกินกรอบ การเติบโตแทบทั้งหมดมาจากการหาลูกค้าใหม่", cap: `ซื้อซ้ำแค่ <b>${fmt(tR)}</b> ครั้ง` },
       { layer: "late", cam: [1, 50, 50], n: fmt(m.late_pct[mx], 1) + "%", c: "o", h: `ส่งช้าใน ${monthLbl(m.months[mx])}`, p: "ปกติส่งช้าราว 3–6% แต่พุ่งขึ้นสองช่วง คือหลัง Black Friday พ.ย. 2017 และช่วง ก.พ.–มี.ค. 2018", cap: `ส่งช้าพุ่ง <b>${fmt(m.late_pct[mx], 1)}%</b>` },
-      { layer: "review", mode: "mark", cam: [1.3, 70, 55], n: fmt(m.avg_review[mn], 2) + "★", c: "b", h: `รีวิวต่ำสุดใน ${monthLbl(m.months[mn])}`, p: "เส้นรีวิวตกลงในเดือนเดียวกับที่ส่งช้าพุ่งทุกครั้ง แล้วกลับขึ้นมาเมื่อการส่งของกลับมาตรงเวลา", cap: "ส่งช้าเมื่อไหร่ <b>รีวิวตกทันที</b>" },
+      { layer: "review", mode: "mark", pre: "full", n: fmt(m.avg_review[mn], 2) + "★", c: "b", h: `รีวิวต่ำสุดใน ${monthLbl(m.months[mn])}`, p: "เส้นรีวิวตกลงในเดือนเดียวกับที่ส่งช้าพุ่งทุกครั้ง แล้วกลับขึ้นมาเมื่อการส่งของกลับมาตรงเวลา", cap: "ส่งช้าเมื่อไหร่ <b>รีวิวตกทันที</b>" },
     ]; } },
     q2: { title: "Q2", layers: ["seg", "ltv", "pareto"], steps: d => { const segs = d.segments, p = d.pareto;
       const sleepy = segs.filter(s => ["about_sleep", "hibernating", "lost"].includes(s.key)).reduce((a, s) => a + s.cust_pct, 0);
@@ -595,11 +603,11 @@ footer { padding-block: 28px 56px; border-top: 1px solid var(--hair); font-size:
       { layer: "seg", cam: [1, 50, 50], n: fmt(sleepy, 0) + "%", c: "o", h: "ซื้อครั้งเดียวแล้วเงียบเกิน 90 วัน", p: "Hibernating กับ Lost คือกลุ่มใหญ่ที่สุด ส่วน Champions ที่ซื้อซ้ำและยังแอคทีฟมีแค่ราว 1%", cap: `<b>${fmt(sleepy, 0)}%</b> ของลูกค้ากำลังหลับ` },
       { layer: "ltv", cam: [1.3, 45, 20], n: fmt(p.ltv_repeat / p.ltv_single, 1) + "×", c: "o", h: "LTV ของคนที่ซื้อซ้ำ", p: `คนที่ซื้อซ้ำใช้จ่ายสะสมเฉลี่ย R$${fmt(p.ltv_repeat)} เทียบ R$${fmt(p.ltv_single)} ของคนซื้อครั้งเดียว ดึงให้กลับมาได้หนึ่งคนคุ้มพอ ๆ กับหาลูกค้าใหม่สองคน`, cap: `R$<b>${fmt(p.ltv_repeat)}</b> vs R$${fmt(p.ltv_single)}` },
       { layer: "pareto", mode: "all", cam: [1, 50, 50], n: fmt(p.top10_rev_pct, 0) + "%", c: "b", h: "รายได้จากลูกค้า top 10%", p: "เส้นส้มคือรายได้สะสมเมื่อเรียงลูกค้าจากใช้จ่ายมากไปน้อย ยิ่งโก่งเหนือเส้นประมาก รายได้ยิ่งกระจุกตัวอยู่กับคนกลุ่มเล็ก", cap: `top 10% ทำรายได้ <b>${fmt(p.top10_rev_pct, 0)}%</b>` },
-      { layer: "pareto", mode: "top", cam: [1.8, 12, 34], n: "VIP", c: "o", h: "กลุ่มที่ควรดูแลพิเศษ", p: "ซูมดูช่วงต้นเส้น ลูกค้า 10% แรกคือกลุ่มที่ควรได้สิทธิพิเศษและการดูแลเฉพาะ แม้ส่วนใหญ่ยังซื้อแค่ครั้งเดียว", cap: "โฟกัส <b>top 10%</b> ด้วย VIP tier" },
+      { layer: "pareto", mode: "top", n: "VIP", c: "o", h: "กลุ่มที่ควรดูแลพิเศษ", p: "ซูมดูช่วง 30% แรกของเส้น ลูกค้า 10% แรกคือกลุ่มที่ควรได้สิทธิพิเศษและการดูแลเฉพาะ แม้ส่วนใหญ่ยังซื้อแค่ครั้งเดียว", cap: "โฟกัส <b>top 10%</b> ด้วย VIP tier" },
     ]; } },
     q3: { title: "Q3", layers: ["delay", "scatter", "revRepeat"], steps: d => { const bd = d.q3.by_delay, br = d.q3.by_review; return [
       { layer: "delay", mode: "all", cam: [1, 50, 50], n: fmt(bd[0].avg_review, 1) + "★", c: "b", h: "เมื่อส่งก่อนกำหนด", p: "ออเดอร์ส่วนใหญ่ถึงก่อนวันที่สัญญาไว้ และได้รีวิวเฉลี่ยเกิน 4 ดาว", cap: `ส่งก่อนกำหนด รีวิว <b>${fmt(bd[0].avg_review, 1)}★</b>` },
-      { layer: "delay", mode: "late", cam: [1.5, 86, 96], n: fmt(bd[4].low_review_pct, 0) + "%", c: "o", h: "ได้ 1–2 ดาวเมื่อส่งช้า 8+ วัน", p: `ซูมเข้าสองแท่งสีส้ม แค่ช้า 1–7 วันรีวิวก็ร่วงเหลือ ${fmt(bd[3].avg_review, 1)} ดาว ถ้าช้าเกิน 8 วันเหลือ ${fmt(bd[4].avg_review, 1)} ดาว`, cap: `ช้า 8+ วัน → <b>${fmt(bd[4].avg_review, 1)}★</b>` },
+      { layer: "delay", mode: "late", n: fmt(bd[4].low_review_pct, 0) + "%", c: "o", h: "ได้ 1–2 ดาวเมื่อส่งช้า 8+ วัน", p: `ดูสองแท่งสีส้ม แค่ช้า 1–7 วันรีวิวก็ร่วงเหลือ ${fmt(bd[3].avg_review, 1)} ดาว ถ้าช้าเกิน 8 วันเหลือ ${fmt(bd[4].avg_review, 1)} ดาว`, cap: `ช้า 8+ วัน → <b>${fmt(bd[4].avg_review, 1)}★</b>` },
       { layer: "scatter", cam: [1, 50, 50], n: "r = " + fmt(corr, 2), c: "o", h: "เป็นแบบนี้ทุกรัฐ", p: "แต่ละวงคือหนึ่งรัฐ (ใหญ่ = ลูกค้าเยอะ) รัฐที่ส่งช้าบ่อยอย่าง AL และ MA ได้รีวิวต่ำกว่าเพื่อน คลิกวงไหนก็ได้เพื่อกรองทั้งหน้าเป็นรัฐนั้น", cap: "รัฐที่ส่งช้าบ่อย <b>รีวิวต่ำกว่า</b>" },
       { layer: "revRepeat", cam: [1, 50, 50], n: fmt(br[0].repeat_pct, 1) + "% vs " + fmt(br[4].repeat_pct, 1) + "%", c: "b", h: "รีวิวอย่างเดียวทำนายการกลับมาได้ไม่ดี", p: "คนที่ให้ 1 ดาวกับ 5 ดาวกลับมาซื้อในอัตราใกล้กัน เพราะอัตราซื้อซ้ำต่ำมากทุกกลุ่ม สัญญาณที่ควรใช้จึงเป็นการส่งช้าที่รู้ล่วงหน้าได้ ไม่ใช่การรอดูรีวิว", cap: "แก้ที่ <b>การส่งช้า</b> ก่อนรีวิวจะมา" },
     ]; } },
@@ -664,10 +672,14 @@ footer { padding-block: 28px 56px; border-top: 1px solid var(--hair); font-size:
       if (on) L.classList.add("on");
     });
     const c = st.charts[s.layer], opt = B[s.layer](data(), s.mode);
-    if (cut && !RM) { c.clear(); c.setOption(opt, true); st.flash.classList.remove("go"); void st.flash.offsetWidth; st.flash.classList.add("go"); }
-    else c.setOption(opt, true);
-    const damp = innerWidth < 700 ? .6 : innerWidth < 1024 ? .8 : 1;
-    if (!RM) { st.cam.style.setProperty("--cs", (1 + (s.cam[0] - 1) * damp).toFixed(3)); st.cam.style.setProperty("--ox", s.cam[1] + "%"); st.cam.style.setProperty("--oy", s.cam[2] + "%"); }
+    clearTimeout(st._zt);
+    if (cut) {
+      if (!RM) { c.clear(); st.flash.classList.remove("go"); void st.flash.offsetWidth; st.flash.classList.add("go"); }
+      if (s.pre && !RM) {   // establishing shot first, then the axes zoom in (labels stay readable)
+        c.setOption(B[s.layer](data(), s.pre), true);
+        st._zt = setTimeout(() => { if (st.idx === i) c.setOption(opt); }, 1100);
+      } else c.setOption(opt, true);
+    } else c.setOption(opt);   // same chart: merge so axes and bars animate to the new range
     st.lower.classList.add("swap");
     clearTimeout(st._lt); st._lt = setTimeout(() => { st.lower.innerHTML = s.cap; st.lower.classList.remove("swap"); }, RM ? 0 : 260);
     const nEl = st.host.querySelector(`.step[data-i="${i}"] .n`);
@@ -725,13 +737,14 @@ footer { padding-block: 28px 56px; border-top: 1px solid var(--hair); font-size:
   function drawTimeline() {
     const g = data().gap;
     const Wd = Math.max(300, Math.round($("tlWrap").clientWidth || 1000)), small = Wd < 560;
-    $("tl").setAttribute("viewBox", `0 0 ${Wd} 70`);
+    $("tl").setAttribute("viewBox", `0 0 ${Wd} 84`);
     const X = v => 16 + (Math.min(v ?? 0, 360) / 360) * (Wd - 32);
-    const ticks = [[0, small ? "วัน 0" : "ซื้อครั้งแรก"], [14, small ? "" : "14d"], [g.p50, small ? `${fmt(g.p50)}d` : `P50 · ${fmt(g.p50)}d`], [g.p75, small ? `${fmt(g.p75)}d` : `P75 · ${fmt(g.p75)}d`], [360, "360d"]].filter(t => t[0] != null);
-    $("tl").innerHTML = `<line x1="16" y1="22" x2="${Wd - 16}" y2="22" stroke="${C.grid}" stroke-width="4" stroke-linecap="round"/>
-      <path class="draw" d="M${X(0)} 22 H${X(g.p50)}" stroke="${C.blue}" stroke-width="4" stroke-linecap="round" fill="none" pathLength="1000"/>
-      <path class="draw" d="M${X(0)} 22 H${X(14)}" stroke="${C.orange}" stroke-width="7" stroke-linecap="round" fill="none" pathLength="1000"/>` +
-      ticks.map(([v, t], i) => `<circle class="pop" cx="${X(v)}" cy="22" r="7" fill="#fff" stroke="${C.fg}" stroke-width="3" style="transition-delay:${.2 + i * .18}s"/><text x="${X(v)}" y="56" fill="${C.fg2}" font-size="${small ? 12 : 14}" font-weight="600" font-family="${C.font}" text-anchor="${i === 0 ? "start" : i === ticks.length - 1 ? "end" : "middle"}" style="transition-delay:${.3 + i * .18}s">${t}</text>`).join("");
+    const ticks = [[0, small ? "วัน 0" : "ซื้อครั้งแรก"], [14, "14d", true], [g.p50, small ? `${fmt(g.p50)}d` : `P50 · ${fmt(g.p50)}d`], [g.p75, small ? `${fmt(g.p75)}d` : `P75 · ${fmt(g.p75)}d`], [360, "360d"]].filter(t => t[0] != null);
+    const Y = 34;
+    $("tl").innerHTML = `<line x1="16" y1="${Y}" x2="${Wd - 16}" y2="${Y}" stroke="${C.grid}" stroke-width="4" stroke-linecap="round"/>
+      <path class="draw" d="M${X(0)} ${Y} H${X(g.p50)}" stroke="${C.blue}" stroke-width="4" stroke-linecap="round" fill="none" pathLength="1000"/>
+      <path class="draw" d="M${X(0)} ${Y} H${X(14)}" stroke="${C.orange}" stroke-width="7" stroke-linecap="round" fill="none" pathLength="1000"/>` +
+      ticks.map(([v, t, above], i) => `<circle class="pop" cx="${X(v)}" cy="${Y}" r="7" fill="#fff" stroke="${above ? C.orange : C.fg}" stroke-width="3" style="transition-delay:${.2 + i * .18}s"/><text x="${X(v)}" y="${above ? Y - 16 : Y + 34}" fill="${above ? C.orange : C.fg2}" font-size="${small ? 12 : 14}" font-weight="600" font-family="${C.font}" text-anchor="${i === 0 ? "start" : i === ticks.length - 1 ? "end" : "middle"}" style="transition-delay:${.3 + i * .18}s">${t}</text>`).join("");
 
   }
   function segTable(d) {
