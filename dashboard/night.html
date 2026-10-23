@@ -1,0 +1,572 @@
+<title>Olist Customer Pulse</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="CRM dashboard: repeat-purchase timing, RFM segments and delivery impact on reviews — Olist Brazilian e-commerce 2017–2018">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: product-page storytelling on black — hero statement + unit-dot field → sticky glass filter → spec grid →
+   Q1 scrollytelling (sticky chart + steps) → trend → RFM bento → Q3 delay/review → playbook → notes.
+   Deliberate single dark look (no light theme): every color set explicitly below. */
+:root {
+  color-scheme: dark;
+  --bg: #000000;
+  --band: #0b0b0c;
+  --card: #161618;
+  --card-2: #1d1d20;
+  --hair: #2a2a2e;
+  --fg: #f5f5f7;
+  --fg-2: #a1a1a6;
+  --fg-3: #6e6e73;
+  --blue: #3987e5;        /* series 1 — first-time / customers */
+  --orange: #d95926;      /* series 2 — returning / revenue */
+  --orange-hi: #ff8a4c;
+  --blue-hi: #7ab4ff;
+  --glass: rgba(22, 22, 24, 0.72);
+  --font-display: "Anuphan", "IBM Plex Sans Thai", "Noto Sans Thai", "Leelawadee UI", sans-serif;
+  --font-body: "IBM Plex Sans Thai", "Noto Sans Thai", "Leelawadee UI", Tahoma, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --ease: cubic-bezier(.2, .7, .1, 1);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body);
+  font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--bg); }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; letter-spacing: -0.015em; }
+p { margin: 0; }
+.tnum { font-variant-numeric: tabular-nums; }
+.wrap { max-width: 1120px; margin: 0 auto; }
+section { padding-block: clamp(64px, 10vw, 120px); }
+.eyebrow { font-family: var(--font-display); font-size: 15px; font-weight: 600; color: var(--orange-hi); letter-spacing: 0.01em; }
+.eyebrow.blue { color: var(--blue-hi); }
+.h-xl { font-size: clamp(36px, 6vw, 64px); font-weight: 700; line-height: 1.12; }
+.h-lg { font-size: clamp(30px, 4.6vw, 48px); font-weight: 700; line-height: 1.15; }
+.lead { font-size: clamp(17px, 1.9vw, 21px); color: var(--fg-2); line-height: 1.55; max-width: 46ch; }
+.lead b, .lead strong { color: var(--fg); font-weight: 600; }
+.center { text-align: center; margin-inline: auto; }
+.grad { background: linear-gradient(100deg, var(--blue-hi) 0%, #b7a1ff 45%, var(--orange-hi) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* ---------- reveal: always visible at rest; motion only adds a lift where scroll timelines exist */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .rise { animation: rise linear both; animation-timeline: view(); animation-range: entry 0% cover 28%; }
+    @keyframes rise { from { transform: translateY(28px) scale(.98); } to { transform: none; } }
+  }
+}
+
+/* ---------- hero */
+.hero { padding-top: clamp(56px, 9vw, 104px); padding-bottom: 32px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.hero .kicker { font-size: 14px; color: var(--fg-2); letter-spacing: .04em; }
+.hero h1 { font-size: clamp(40px, 7.2vw, 80px); font-weight: 700; line-height: 1.08; max-width: 14ch; }
+.big-stat { font-family: var(--font-display); font-weight: 700; font-size: clamp(96px, 20vw, 220px); line-height: .95; letter-spacing: -0.04em; }
+.hero .lead { margin-top: 4px; }
+.dotfield-wrap { width: 100%; max-width: 980px; margin-top: 20px; }
+#dotfield { width: 100%; height: auto; aspect-ratio: 50 / 20; display: block; max-width: 100%; }
+.dot-legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px 22px; font-size: 13.5px; color: var(--fg-2); margin-top: 14px; }
+.dot-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; vertical-align: 1px; }
+
+/* ---------- sticky glass filter */
+.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+  margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: var(--glass); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--hair);
+}
+.bar .wrap { display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; padding-block: 10px; }
+.bar .brand { font-family: var(--font-display); font-weight: 600; font-size: 17px; margin-right: auto; }
+.bar label { font-size: 13px; color: var(--fg-2); }
+select {
+  font: inherit; font-size: 14px; color: var(--fg); background: var(--card-2); border: 1px solid var(--hair);
+  border-radius: 980px; padding: 6px 14px; max-width: 100%; min-width: 0;
+}
+.pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.pill { font: inherit; font-size: 13px; color: var(--fg-2); background: transparent; border: 1px solid var(--hair); border-radius: 980px; padding: 4px 12px; cursor: pointer; transition: background .25s, color .25s, border-color .25s; }
+.pill:hover { color: var(--fg); border-color: var(--fg-3); }
+.pill[aria-pressed="true"] { background: var(--fg); color: #000; border-color: var(--fg); font-weight: 600; }
+select:focus-visible, .pill:focus-visible, summary:focus-visible { outline: 2px solid var(--blue-hi); outline-offset: 2px; }
+.scope-note { font-size: 12.5px; color: var(--fg-3); flex-basis: 100%; }
+
+/* ---------- spec grid */
+.specs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 44px; }
+.spec { background: var(--card); border-radius: 22px; padding: 26px 24px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.spec .v { font-family: var(--font-display); font-size: clamp(34px, 4.4vw, 52px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.spec .k { font-size: 15px; color: var(--fg); font-weight: 500; }
+.spec .s { font-size: 13px; color: var(--fg-2); }
+.spec.hot .v { color: var(--orange-hi); }
+
+/* ---------- Q1 scrollytelling */
+.scrolly { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 40px; margin-top: 48px; align-items: start; }
+.sticky-chart { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 84px); background: var(--card); border-radius: 26px; padding: 22px 18px 14px; min-width: 0; }
+.sticky-chart .cap { font-size: 13px; color: var(--fg-2); padding-inline: 6px; }
+.chart { width: 100%; height: 340px; }
+.steps { display: flex; flex-direction: column; gap: 22vh; padding-block: 6vh 20vh; min-width: 0; }
+.step { border-left: 2px solid var(--hair); padding: 6px 0 6px 20px; transition: border-color .4s var(--ease), opacity .4s var(--ease); opacity: .45; }
+.step.on { border-color: var(--orange-hi); opacity: 1; }
+.step .n { font-family: var(--font-display); font-size: clamp(40px, 5vw, 56px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.05; }
+.step h3 { font-size: 21px; font-weight: 600; margin-top: 4px; }
+.step p { color: var(--fg-2); margin-top: 6px; font-size: 15.5px; }
+.no-io .step { opacity: 1; }
+
+/* ---------- generic chart card */
+.card { background: var(--card); border-radius: 26px; padding: 26px 22px 18px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; padding-inline: 4px; }
+.card-title { font-family: var(--font-display); font-size: 19px; font-weight: 600; }
+.legend { display: flex; gap: 16px; font-size: 13px; color: var(--fg-2); flex-wrap: wrap; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: 0; }
+.note { font-size: 12.5px; color: var(--fg-3); padding-inline: 4px; margin-top: 6px; }
+
+/* ---------- bento */
+.bento { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin-top: 48px; }
+.tile { background: var(--card); border-radius: 24px; padding: 22px; display: flex; flex-direction: column; gap: 10px; min-width: 0; grid-column: span 3; position: relative; overflow: hidden; }
+.tile.wide { grid-column: span 3; }
+.tile.repeat { background: linear-gradient(160deg, #2a1810 0%, var(--card) 62%); }
+.tile .name { font-family: var(--font-display); font-weight: 600; font-size: 19px; }
+.tile .rule { font-size: 13px; color: var(--fg-2); }
+.tile .figs { display: flex; gap: 20px; flex-wrap: wrap; margin-top: auto; }
+.tile .fig .v { font-family: var(--font-display); font-weight: 700; font-size: 30px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.tile .fig .k { font-size: 12px; color: var(--fg-2); }
+.meter { display: grid; grid-template-columns: 58px minmax(0, 1fr) 46px; align-items: center; gap: 8px; font-size: 12px; color: var(--fg-2); }
+.meter .track { height: 6px; background: var(--card-2); border-radius: 6px; overflow: hidden; }
+.meter .fill { height: 100%; border-radius: 6px; transform-origin: left; transition: transform 1.1s var(--ease); }
+.meter .val { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--fg); }
+.pareto { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+.pareto .spec .v { font-size: clamp(30px, 3.6vw, 42px); }
+
+/* ---------- Q3 */
+.duo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; margin-top: 48px; }
+.callout { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-top: 40px; justify-content: center; }
+.callout .star { font-family: var(--font-display); font-weight: 700; font-size: clamp(72px, 13vw, 150px); letter-spacing: -0.04em; line-height: 1; color: var(--orange-hi); }
+.callout .vs { font-family: var(--font-display); font-weight: 700; font-size: clamp(40px, 6vw, 72px); color: var(--fg-3); letter-spacing: -0.03em; }
+.callout-cap { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; font-size: 14px; color: var(--fg-2); margin-top: 8px; }
+
+/* ---------- playbook */
+.plays { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 48px; }
+.play { background: var(--card); border-radius: 24px; padding: 26px 24px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.play .when { font-family: var(--font-mono); font-size: 13px; color: var(--orange-hi); }
+.play h3 { font-size: 22px; font-weight: 600; }
+.play p { color: var(--fg-2); font-size: 15px; }
+.timeline { position: relative; height: 56px; margin-top: 44px; }
+.timeline svg { width: 100%; height: 56px; display: block; overflow: visible; }
+
+/* ---------- notes */
+details { background: var(--card); border-radius: 22px; padding: 18px 22px; margin-top: 40px; }
+summary { cursor: pointer; font-family: var(--font-display); font-weight: 600; font-size: 17px; }
+.notes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; margin-top: 14px; font-size: 14px; color: var(--fg-2); }
+.notes b { color: var(--fg); }
+.notes ul { margin: 6px 0 0; padding-left: 18px; }
+.tbl { overflow-x: auto; margin-top: 18px; }
+table { border-collapse: collapse; width: 100%; min-width: 600px; font-size: 13.5px; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--hair); }
+th { color: var(--fg-2); font-weight: 500; font-size: 12.5px; }
+td.r, th.r { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+footer { padding-block: 32px 56px; border-top: 1px solid var(--hair); font-size: 12.5px; color: var(--fg-3); }
+
+/* ---------- responsive */
+@media (max-width: 900px) {
+  .scrolly { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .sticky-chart { top: calc(env(safe-area-inset-top, 0px) + 96px); z-index: 2; }
+  .chart { height: 260px; }
+  .steps { gap: 40vh; padding-block: 8vh 30vh; position: relative; z-index: 3; }
+  .step { background: rgba(22,22,24,.92); border-radius: 0 16px 16px 0; padding: 14px 18px; backdrop-filter: blur(10px); }
+  .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tile, .tile.wide { grid-column: span 1; }
+  .plays, .pareto { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 680px) {
+  .specs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .duo, .notes { grid-template-columns: minmax(0, 1fr); }
+  .bento { grid-template-columns: minmax(0, 1fr); }
+  .bar .brand { flex-basis: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .meter .fill, .step { transition: none; }
+}
+</style>
+
+<!-- ============ HERO ============ -->
+<header class="hero wrap">
+  <span class="kicker">01219482 Data Visualization · Olist Brazilian E-Commerce · ม.ค. 2017 – ส.ค. 2018</span>
+  <h1>Olist Customer Pulse</h1>
+  <div class="big-stat grad tnum" id="heroStat">2.1%</div>
+  <p class="lead center" id="heroLead">ของลูกค้ากลับมาซื้อครั้งที่สอง ที่เหลือซื้อครั้งเดียวแล้วหายไป แดชบอร์ดนี้ช่วยฝ่าย CRM ตัดสินใจว่า <b>ควรส่งโปรโมชันกระตุ้นตอนไหน</b></p>
+  <div class="dotfield-wrap">
+    <canvas id="dotfield" width="1000" height="400" role="img" aria-label="จุด 1,000 จุดแทนลูกค้า จุดสีส้มคือสัดส่วนที่กลับมาซื้อซ้ำ"></canvas>
+    <div class="dot-legend"><span><i style="background:var(--fg-3)"></i>ซื้อครั้งเดียว</span><span><i style="background:var(--orange-hi)"></i>กลับมาซื้อซ้ำ</span><span id="dotNote">1 จุด ≈ 93 คน</span></div>
+  </div>
+</header>
+
+<!-- ============ FILTER BAR ============ -->
+<nav class="bar" aria-label="ตัวกรอง">
+  <div class="wrap">
+    <span class="brand">Customer Pulse</span>
+    <label for="state">รัฐ</label>
+    <select id="state"></select>
+    <div class="pills" id="pills"></div>
+  </div>
+</nav>
+
+<main>
+  <!-- ============ SPECS ============ -->
+  <section class="wrap" aria-labelledby="specH">
+    <span class="eyebrow blue" id="scopeEyebrow">ทั้งประเทศ</span>
+    <h2 class="h-xl" id="specH">ลูกค้าเกือบแสนคน.<br><span style="color:var(--fg-3)">กลับมาแค่หยิบมือ.</span></h2>
+    <div class="specs" id="specs"></div>
+  </section>
+
+  <!-- ============ Q1 SCROLLY ============ -->
+  <section class="wrap" aria-labelledby="q1H" style="padding-top:0">
+    <span class="eyebrow">Q1 · จังหวะเวลา</span>
+    <h2 class="h-lg" id="q1H">ลูกค้ากลับมาซื้อครั้งที่ 2<br>หลังจากผ่านไปกี่วัน?</h2>
+    <div class="scrolly">
+      <div class="sticky-chart">
+        <div class="chart" id="cGap" role="img" aria-label="จำนวนลูกค้าซื้อซ้ำตามจำนวนวันถึงการซื้อครั้งที่ 2"></div>
+        <p class="cap" id="gapCap"></p>
+      </div>
+      <div class="steps" id="steps"></div>
+    </div>
+  </section>
+
+  <!-- ============ TREND ============ -->
+  <section class="wrap" aria-labelledby="trH" style="padding-top:0">
+    <span class="eyebrow blue">บริบท · แนวโน้มรายเดือน</span>
+    <h2 class="h-lg" id="trH">ยอดโตทุกเดือน.<br><span style="color:var(--fg-3)">แต่โตจากลูกค้าใหม่เกือบทั้งหมด.</span></h2>
+    <p class="lead" id="trLead" style="margin-top:16px"></p>
+    <div class="card rise" style="margin-top:36px">
+      <div class="card-head"><span class="card-title">จำนวนการซื้อต่อเดือน</span>
+        <div class="legend"><span><i style="background:var(--blue)"></i>ลูกค้าใหม่</span><span><i style="background:var(--orange)"></i>กลับมาซื้อซ้ำ</span></div></div>
+      <div class="chart" id="cTrend" role="img" aria-label="จำนวนการซื้อรายเดือน แยกลูกค้าใหม่และซื้อซ้ำ"></div>
+    </div>
+  </section>
+
+  <!-- ============ Q2 BENTO ============ -->
+  <section class="wrap" aria-labelledby="q2H" style="padding-top:0">
+    <span class="eyebrow">Q2 · กลุ่มลูกค้า RFM</span>
+    <h2 class="h-lg" id="q2H">คนที่กลับมาน้อย.<br><span class="grad">แต่ใช้จ่ายเกือบสองเท่า.</span></h2>
+    <p class="lead" id="q2Lead" style="margin-top:16px"></p>
+    <div class="bento" id="bento"></div>
+    <div class="pareto" id="pareto"></div>
+  </section>
+
+  <!-- ============ Q3 ============ -->
+  <section class="wrap" aria-labelledby="q3H" style="padding-top:0">
+    <span class="eyebrow">Q3 · สัญญาณเตือนก่อนลูกค้าหาย</span>
+    <h2 class="h-lg center" id="q3H" style="text-align:center">ส่งช้า 8 วัน. รีวิวดิ่ง.</h2>
+    <div class="callout" aria-label="รีวิวเฉลี่ยเมื่อส่งช้า เทียบเมื่อส่งก่อนกำหนด">
+      <span class="star tnum" id="starLate">1.7★</span><span class="vs">vs</span><span class="star tnum" id="starEarly" style="color:var(--blue-hi)">4.3★</span>
+    </div>
+    <div class="callout-cap"><span>ส่งช้า 8 วันขึ้นไป</span><span>ส่งก่อนกำหนด ≥ 7 วัน</span></div>
+    <p class="lead center" id="q3Lead" style="margin-top:28px;text-align:center"></p>
+    <div class="duo">
+      <div class="card rise">
+        <div class="card-head"><span class="card-title">รีวิวเฉลี่ยตามเวลาส่งเทียบวันที่สัญญา</span></div>
+        <div class="chart" id="cDelay" role="img" aria-label="คะแนนรีวิวเฉลี่ยตามความล่าช้าในการส่ง"></div>
+        <p class="note">ทุกออเดอร์ที่ได้รับรีวิว · สีส้ม = ส่งช้ากว่ากำหนด</p>
+      </div>
+      <div class="card rise">
+        <div class="card-head"><span class="card-title">% กลับมาซื้อภายใน 180 วัน ตามรีวิวแรก</span></div>
+        <div class="chart" id="cRev" role="img" aria-label="อัตราการซื้อซ้ำตามคะแนนรีวิวครั้งแรก"></div>
+        <p class="note" id="revNote"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PLAYBOOK ============ -->
+  <section class="wrap" aria-labelledby="pbH" style="padding-top:0">
+    <span class="eyebrow blue">So what · CRM Playbook</span>
+    <h2 class="h-lg" id="pbH">สามจังหวะที่ทีม CRM<br>ควรลงมือ.</h2>
+    <div class="timeline" aria-hidden="true"><svg id="tl" viewBox="0 0 1000 56" preserveAspectRatio="none"></svg></div>
+    <div class="plays" id="plays"></div>
+
+    <details>
+      <summary>ข้อมูล นิยาม และการทำความสะอาดข้อมูล</summary>
+      <div class="notes" id="notes"></div>
+      <div class="tbl"><table id="segTbl"></table></div>
+    </details>
+  </section>
+</main>
+
+<footer class="wrap" id="foot"></footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+<script src="data.js"></script>
+<script>
+(function () {
+  const D = window.DASH_DATA;
+  const $ = (id) => document.getElementById(id);
+  const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const fmt = (n, d = 0) => n == null ? "–" : Number(n).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+  const brl = (n) => n == null ? "–" : "R$" + (n >= 1e6 ? fmt(n / 1e6, 2) + "M" : n >= 1e4 ? fmt(n / 1e3, 0) + "k" : fmt(n, 0));
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const C = { blue: css("--blue"), orange: css("--orange"), blueHi: css("--blue-hi"), orangeHi: css("--orange-hi"), fg: css("--fg"), fg2: css("--fg-2"), fg3: css("--fg-3"), hair: css("--hair"), card: css("--card"), card2: css("--card-2"), mono: css("--font-mono"), body: css("--font-body") };
+  const ST = { SP: "São Paulo", RJ: "Rio de Janeiro", MG: "Minas Gerais", RS: "Rio Grande do Sul", PR: "Paraná", SC: "Santa Catarina", BA: "Bahia", DF: "Distrito Federal", ES: "Espírito Santo", GO: "Goiás", PE: "Pernambuco", CE: "Ceará", PA: "Pará", MT: "Mato Grosso", MA: "Maranhão", MS: "Mato Grosso do Sul", PB: "Paraíba", PI: "Piauí", RN: "Rio Grande do Norte", AL: "Alagoas", SE: "Sergipe", TO: "Tocantins", RO: "Rondônia", AM: "Amazonas", AC: "Acre", AP: "Amapá", RR: "Roraima" };
+  const TH_M = ["", "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+
+  // ================= filter
+  let cur = "all";
+  try { const s = localStorage.getItem("olist_state"); if (s && (s === "all" || D.states[s])) cur = s; } catch (e) {}
+  const sizes = D.meta.state_customers;
+  $("state").innerHTML = `<option value="all">ทั้งประเทศ · ${fmt(D.all.kpi.customers)} คน</option>` +
+    Object.keys(sizes).map(s => `<option value="${s}">${s} · ${ST[s] || s} · ${fmt(sizes[s])} คน</option>`).join("");
+  $("pills").innerHTML = ["all", ...Object.keys(sizes).slice(0, 4)].map(s => `<button type="button" class="pill" data-s="${s}">${s === "all" ? "ทั้งหมด" : s}</button>`).join("");
+  $("pills").addEventListener("click", e => { const b = e.target.closest(".pill"); if (b) set(b.dataset.s); });
+  $("state").addEventListener("change", e => set(e.target.value));
+  function set(s) { cur = s; try { localStorage.setItem("olist_state", s); } catch (e) {} render(true); }
+  const data = () => cur === "all" ? D.all : D.states[cur];
+
+  // ================= count-up (final value is in the DOM at rest)
+  function countUp(el, to, dec, suffix, prefix) {
+    const final = (prefix || "") + fmt(to, dec) + (suffix || "");
+    if (RM || to == null) { el.textContent = final; return; }
+    const t0 = performance.now(), dur = 1100;
+    (function tick(t) {
+      const p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+      el.textContent = (prefix || "") + fmt(to * e, dec) + (suffix || "");
+      if (p < 1) requestAnimationFrame(tick); else el.textContent = final;
+    })(t0);
+  }
+  const seen = new WeakSet();
+  const io = "IntersectionObserver" in window ? new IntersectionObserver((ents) => {
+    ents.forEach(en => { if (en.isIntersecting && !seen.has(en.target)) { seen.add(en.target); en.target._play && en.target._play(); } });
+  }, { threshold: 0.35 }) : null;
+  function onEnter(el, fn) { el._play = fn; if (io) io.observe(el); }
+
+  // ================= dot field (unit chart: 1,000 dots)
+  const cv = $("dotfield"), cx = cv.getContext("2d");
+  let dotRepeat = 21, dotT0 = 0, dotOrder = [];
+  (function seedOrder() { // deterministic scatter for orange dots
+    let s = 7; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
+    dotOrder = Array.from({ length: 1000 }, (_, i) => i).sort(() => r() - .5);
+  })();
+  function drawDots(now) {
+    const W = cv.width, H = cv.height, cols = 50, rows = 20, gx = W / cols, gy = H / rows;
+    cx.clearRect(0, 0, W, H);
+    const lit = new Set(dotOrder.slice(0, dotRepeat));
+    const p = RM ? 1 : Math.min(1, (now - dotT0) / 1400);
+    for (let i = 0; i < 1000; i++) {
+      const c = i % cols, r = Math.floor(i / cols);
+      const x = gx * (c + .5), y = gy * (r + .5);
+      const wave = Math.min(1, Math.max(0, p * 1.6 - (c / cols) * .6));
+      if (lit.has(i)) {
+        const pulse = RM ? 0 : (Math.sin(now / 520 + i) + 1) / 2;
+        cx.beginPath(); cx.fillStyle = "rgba(255,138,76," + (0.16 + .22 * pulse) * wave + ")"; cx.arc(x, y, gx * .55, 0, 7); cx.fill();
+        cx.beginPath(); cx.fillStyle = C.orangeHi; cx.globalAlpha = .35 + .65 * wave; cx.arc(x, y, gx * .24, 0, 7); cx.fill(); cx.globalAlpha = 1;
+      } else {
+        cx.beginPath(); cx.fillStyle = "rgba(110,110,115," + (0.32 + .4 * wave) + ")"; cx.arc(x, y, gx * .17, 0, 7); cx.fill();
+      }
+    }
+    if (!RM && !document.hidden) requestAnimationFrame(drawDots);
+  }
+  dotT0 = performance.now(); drawDots(dotT0);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && !RM) requestAnimationFrame(drawDots); });
+
+  // ================= echarts helpers
+  const charts = {};
+  const ch = (id) => charts[id] || (charts[id] = echarts.init($(id), null, { renderer: "svg" }));
+  const tip = { backgroundColor: "rgba(29,29,32,.96)", borderColor: C.hair, borderRadius: 12, padding: [10, 12], textStyle: { color: C.fg, fontSize: 13, fontFamily: C.body }, confine: true, extraCssText: "backdrop-filter:blur(12px);box-shadow:0 10px 30px rgba(0,0,0,.5);" };
+  const axLbl = { color: C.fg3, fontSize: 11.5, fontFamily: C.mono };
+  const split = { lineStyle: { color: "#232327" } };
+  const anim = RM ? { animation: false } : { animationDuration: 1100, animationEasing: "cubicOut", animationDurationUpdate: 700, animationEasingUpdate: "cubicInOut" };
+  function replay(id, opt) { // grow-in when the chart first scrolls into view
+    if (RM) return;
+    onEnter($(id), () => { const c = ch(id); c.clear(); c.setOption(opt(), true); });
+  }
+
+  // ================= Q1 steps
+  let gapStep = 0;
+  function gapOption() {
+    const g = data().gap;
+    const ranges = [null, [0, 30], [0, g.p50], [g.p75, 360]];
+    const hl = ranges[gapStep];
+    const inHl = (i) => !hl || (i * 15 < hl[1] && i * 15 + 15 > hl[0]);
+    const marks = [["P25", g.p25], ["P50", g.p50], ["P75", g.p75]].filter(m => m[1] != null);
+    return {
+      ...anim,
+      grid: { left: 44, right: 14, top: 30, bottom: 44 },
+      tooltip: { ...tip, trigger: "axis", axisPointer: { type: "none" },
+        formatter: ps => { const i = Math.round(ps[0].value[0]); return `<b>${g.bins[i]} วัน</b><br>${fmt(g.counts[i])} คน · ${fmt(100 * g.counts[i] / (g.n || 1), 1)}%<br><span style="color:${C.fg2}">สะสม ${fmt(g.cum_pct[i], 1)}%</span>`; } },
+      xAxis: { type: "value", min: 0, max: 360, interval: 60, axisLabel: { ...axLbl, formatter: v => v === 360 ? "360+" : v }, axisLine: { lineStyle: { color: C.hair } }, splitLine: { show: false },
+        name: "วันหลังซื้อครั้งแรก", nameLocation: "middle", nameGap: 28, nameTextStyle: { color: C.fg3, fontSize: 12 } },
+      yAxis: { type: "value", axisLabel: axLbl, splitLine: split, name: "คน", nameTextStyle: { color: C.fg3, fontSize: 12, align: "right" } },
+      series: [{
+        type: "custom",
+        renderItem: (params, api) => {
+          const i = api.value(0), a = api.coord([i * 15, 0]), b = api.coord([i * 15 + 15, api.value(1)]);
+          const on = inHl(i);
+          return { type: "rect", shape: { x: a[0] + 1, y: b[1], width: Math.max(b[0] - a[0] - 2, 1), height: a[1] - b[1], r: [4, 4, 0, 0] },
+            style: { fill: on ? (gapStep === 3 ? C.orange : C.blue) : "#2c2c31" },
+            transition: ["shape", "style"], enterFrom: { shape: { y: a[1], height: 0 } } };
+        },
+        encode: { x: 0, y: 1 }, data: g.counts.map((c, i) => [i, c]),
+        markLine: { silent: true, symbol: "none", label: { color: C.fg2, fontFamily: C.mono, fontSize: 11, formatter: m => ($("cGap").clientWidth < 520 ? m.name : `${m.name} ${m.value}d`), fontSize: $("cGap").clientWidth < 520 ? 10 : 11 },
+          lineStyle: { color: C.fg3, type: [3, 3], width: 1 }, data: marks.map(([n, v]) => ({ name: n, xAxis: Math.min(v, 359) })) },
+      }],
+    };
+  }
+  function buildSteps() {
+    const g = data().gap;
+    const steps = [
+      [fmt(g.n), "คนที่กลับมาซื้อครั้งที่ 2", "แต่ละแท่งคือจำนวนลูกค้าที่กลับมาซื้อซ้ำ แยกตามจำนวนวันนับจากการซื้อครั้งแรก ช่วงละ 15 วัน"],
+      [fmt(g.within_30, 0) + "%", "กลับมาภายใน 30 วันแรก", "เดือนแรกหลังซื้อคือช่วงที่ลูกค้ากลับมาหนาแน่นที่สุด แท่งซ้ายสุดสูงกว่าแท่งอื่นอย่างชัดเจน"],
+      [fmt(g.p50) + " วัน", "ครึ่งหนึ่งกลับมาภายในช่วงนี้", `มัธยฐานของรอบซื้อซ้ำคือ ${fmt(g.p50)} วัน โปรโมชันที่ส่งหลังจุดนี้จะพลาดคนที่ตั้งใจจะกลับมาไปครึ่งหนึ่งแล้ว`],
+      [fmt(100 - 75) + "%", `ที่เหลือหลังวันที่ ${fmt(g.p75)}`, "หลังจากนี้กราฟแบนลงยาว ลูกค้าที่หายไปนานเกินช่วงนี้แทบไม่กลับมาเอง ต้องใช้แคมเปญ win-back แยก"],
+    ];
+    $("steps").innerHTML = steps.map(([n, h, p], i) => `<div class="step${i === gapStep ? " on" : ""}" data-i="${i}"><div class="n tnum">${n}</div><h3>${h}</h3><p>${p}</p></div>`).join("");
+    $("gapCap").textContent = `n = ${fmt(g.n)} คน · ออเดอร์ที่ห่างกัน < 1 วันนับเป็นตะกร้าเดียว · แท่งสุดท้ายรวมทุกคนที่ใช้ ≥ 345 วัน`;
+    if (stepIO) document.querySelectorAll(".step").forEach(s => stepIO.observe(s));
+  }
+  const stepIO = "IntersectionObserver" in window ? new IntersectionObserver(ents => {
+    ents.forEach(en => {
+      if (!en.isIntersecting) return;
+      const i = +en.target.dataset.i; if (i === gapStep) return;
+      gapStep = i;
+      document.querySelectorAll(".step").forEach(s => s.classList.toggle("on", +s.dataset.i === i));
+      ch("cGap").setOption(gapOption(), true);
+    });
+  }, { rootMargin: "-45% 0px -45% 0px" }) : null;
+  if (!stepIO) document.body.classList.add("no-io");
+
+  // ================= render
+  function render(fromFilter) {
+    const d = data(), k = d.kpi, g = d.gap, p = d.pareto, q3 = d.q3, segs = d.segments;
+    const label = cur === "all" ? "ทั้งประเทศ" : `รัฐ ${cur} · ${ST[cur] || ""}`;
+    document.querySelectorAll(".pill").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.s === cur)));
+    $("state").value = cur;
+    $("scopeEyebrow").textContent = `${label} · ${D.meta.period}`;
+
+    // hero
+    $("heroStat").textContent = fmt(k.repeat_rate, 1) + "%";
+    dotRepeat = Math.max(k.repeaters ? 1 : 0, Math.round(k.repeat_rate * 10));
+    $("dotNote").textContent = `1 จุด ≈ ${fmt(k.customers / 1000, k.customers < 10000 ? 1 : 0)} คน`;
+    if (fromFilter && !RM) dotT0 = performance.now();
+    if (RM) drawDots(performance.now());
+
+    // specs
+    const specs = [
+      ["customers", k.customers, 0, "", "", "ลูกค้า (unique)", `${fmt(k.orders)} ออเดอร์`],
+      ["revenue", k.revenue / 1e6, 2, "M", "R$", "รายได้รวม", `เฉลี่ย R$${fmt(k.aov, 0)} ต่อออเดอร์`],
+      ["repeat", k.repeat_rate, 1, "%", "", "กลับมาซื้อซ้ำ", `${fmt(k.repeaters)} คน`, true],
+      ["gap", k.median_gap, 0, " วัน", "", "มัธยฐานถึงครั้งที่ 2", "เฉพาะคนที่ซื้อซ้ำ"],
+      ["review", k.avg_review, 2, "★", "", "รีวิวเฉลี่ย", "เต็ม 5 ดาว"],
+      ["late", k.late_pct, 1, "%", "", "ส่งช้ากว่ากำหนด", "ของออเดอร์ที่ส่งแล้ว"],
+    ];
+    $("specs").innerHTML = specs.map(s => `<div class="spec rise${s[7] ? " hot" : ""}"><span class="v" data-to="${s[1] ?? ""}" data-dec="${s[2]}" data-suf="${s[3]}" data-pre="${s[4]}">${s[1] == null ? "–" : s[4] + fmt(s[1], s[2]) + s[3]}</span><span class="k">${s[5]}</span><span class="s">${s[6]}</span></div>`).join("");
+    const playSpecs = () => document.querySelectorAll("#specs .v").forEach(el => el.dataset.to !== "" && countUp(el, +el.dataset.to, +el.dataset.dec, el.dataset.suf, el.dataset.pre));
+    if (fromFilter) playSpecs(); else onEnter($("specs"), playSpecs);
+
+    // Q1
+    buildSteps();
+    ch("cGap").setOption(gapOption(), true);
+
+    // trend
+    const m = d.monthly, lbl = m.months.map(s => { const [y, mo] = s.split("-"); return TH_M[+mo] + " " + y.slice(2); });
+    const tN = m.new.reduce((a, c) => a + c, 0), tR = m.returning.reduce((a, c) => a + c, 0);
+    $("trLead").innerHTML = `ตลอด 20 เดือนมีการซื้อ <b>${fmt(tN + tR)}</b> ครั้ง เป็นการซื้อซ้ำเพียง <b>${fmt(100 * tR / (tN + tR || 1), 1)}%</b> ถ้าไม่หาลูกค้าใหม่ทุกเดือน ยอดขายจะหยุดโตทันที`;
+    const trendOpt = () => ({
+      ...anim, grid: { left: 44, right: 10, top: 16, bottom: 36 },
+      tooltip: { ...tip, trigger: "axis", axisPointer: { type: "shadow", shadowStyle: { color: "rgba(255,255,255,.04)" } },
+        formatter: ps => { const i = ps[0].dataIndex, t = m.new[i] + m.returning[i]; return `<b>${lbl[i]}</b><br>ลูกค้าใหม่ ${fmt(m.new[i])}<br>ซื้อซ้ำ ${fmt(m.returning[i])} (${fmt(t ? 100 * m.returning[i] / t : 0, 1)}%)<br><span style="color:${C.fg2}">รายได้ ${brl(m.revenue[i])}</span>`; } },
+      xAxis: { type: "category", data: lbl, axisLabel: { ...axLbl, interval: "auto" }, axisLine: { lineStyle: { color: C.hair } }, axisTick: { show: false } },
+      yAxis: { type: "value", axisLabel: { ...axLbl, formatter: v => v >= 1000 ? v / 1000 + "k" : v }, splitLine: split },
+      series: [
+        { type: "bar", stack: "t", data: m.new, barCategoryGap: "30%", itemStyle: { color: C.blue, borderColor: C.card, borderWidth: 1 }, animationDelay: i => i * 28 },
+        { type: "bar", stack: "t", data: m.returning, itemStyle: { color: C.orange, borderRadius: [4, 4, 0, 0], borderColor: C.card, borderWidth: 1 }, animationDelay: i => 300 + i * 28 },
+      ],
+    });
+    ch("cTrend").setOption(trendOpt(), true);
+    if (!fromFilter) replay("cTrend", trendOpt);
+
+    // Q2 bento
+    const sleepy = segs.filter(s => ["about_sleep", "hibernating", "lost"].includes(s.key)).reduce((a, s) => a + s.cust_pct, 0);
+    $("q2Lead").innerHTML = `ลูกค้า <b>${fmt(sleepy, 0)}%</b> ซื้อครั้งเดียวแล้วเงียบหายเกิน 90 วัน ส่วนคนที่กลับมาซื้อซ้ำใช้จ่ายสะสมเฉลี่ย <b>R$${fmt(p.ltv_repeat)}</b> เทียบ R$${fmt(p.ltv_single)} ของคนซื้อครั้งเดียว`;
+    const maxPct = Math.max(...segs.map(s => Math.max(s.cust_pct || 0, s.rev_pct || 0)), 1);
+    $("bento").innerHTML = segs.map(s => {
+      const rep = s.key === "champions" || s.key === "cant_lose";
+      return `<div class="tile rise${rep ? " repeat wide" : ""}">
+        <span class="name">${s.label}</span><span class="rule">${s.rule}</span>
+        <div class="figs"><div class="fig"><div class="v">${fmt(s.cust_pct, 1)}%</div><div class="k">ของลูกค้า · ${fmt(s.customers)} คน</div></div>
+        <div class="fig"><div class="v" style="color:${rep ? C.orangeHi : C.fg}">R$${fmt(s.avg_ltv, 0)}</div><div class="k">LTV เฉลี่ยต่อคน</div></div></div>
+        <div class="meter"><span>ลูกค้า</span><div class="track"><div class="fill" style="background:${C.blue};transform:scaleX(${(s.cust_pct || 0) / maxPct})"></div></div><span class="val">${fmt(s.cust_pct, 1)}%</span></div>
+        <div class="meter"><span>รายได้</span><div class="track"><div class="fill" style="background:${C.orange};transform:scaleX(${(s.rev_pct || 0) / maxPct})"></div></div><span class="val">${fmt(s.rev_pct, 1)}%</span></div>
+      </div>`;
+    }).join("");
+    const growMeters = () => { if (RM) return; const fills = document.querySelectorAll("#bento .fill"); const tgt = [...fills].map(f => f.style.transform);
+      fills.forEach(f => { f.style.transition = "none"; f.style.transform = "scaleX(0)"; }); void document.body.offsetWidth;
+      fills.forEach((f, i) => { f.style.transition = ""; f.style.transitionDelay = (i * 60) + "ms"; f.style.transform = tgt[i]; }); };
+    if (fromFilter) growMeters(); else onEnter($("bento"), growMeters);
+    $("pareto").innerHTML = [
+      [fmt(p.top10_rev_pct, 0) + "%", "รายได้จากลูกค้า top 10%", "จัดอันดับตามยอดใช้จ่ายสะสม"],
+      [fmt(p.ltv_repeat / p.ltv_single, 1) + "×", "LTV คนซื้อซ้ำ เทียบคนซื้อครั้งเดียว", `R$${fmt(p.ltv_repeat)} vs R$${fmt(p.ltv_single)}`],
+      [fmt(p.repeat_rev_pct, 1) + "%", "รายได้ที่มาจากคนซื้อซ้ำ", "พื้นที่ให้โตยังเหลืออีกมาก"],
+    ].map(([v, k2, s]) => `<div class="spec rise"><span class="v">${v}</span><span class="k">${k2}</span><span class="s">${s}</span></div>`).join("");
+
+    // Q3
+    const bd = q3.by_delay, br = q3.by_review;
+    $("starLate").textContent = fmt(bd[4].avg_review, 1) + "★";
+    $("starEarly").textContent = fmt(bd[0].avg_review, 1) + "★";
+    $("q3Lead").innerHTML = `ออเดอร์ที่ส่งช้า 8 วันขึ้นไป ได้ 1–2 ดาวถึง <b>${fmt(bd[4].low_review_pct, 0)}%</b> แต่คะแนนรีวิวเองแยกคนที่จะกลับมาได้ไม่มาก (1 ดาวกลับมา ${fmt(br[0].repeat_pct, 1)}% · 5 ดาว ${fmt(br[4].repeat_pct, 1)}%) <b>ตัวที่ต้องแก้คือการส่งช้า ไม่ใช่รอดูรีวิว</b>`;
+    const delayOpt = () => ({
+      ...anim, grid: { left: 30, right: 8, top: 26, bottom: 46 },
+      tooltip: { ...tip, trigger: "item", formatter: x => { const r = bd[x.dataIndex]; return `<b>${r.label}</b><br>รีวิวเฉลี่ย ${fmt(r.avg_review, 2)}<br>ได้ 1–2 ดาว ${fmt(r.low_review_pct, 1)}%<br><span style="color:${C.fg2}">${fmt(r.orders)} ออเดอร์</span>`; } },
+      xAxis: { type: "category", data: bd.map(r => r.label.replace(" ", "\n")), axisLabel: { color: C.fg2, fontSize: 11, interval: 0, lineHeight: 15 }, axisLine: { lineStyle: { color: C.hair } }, axisTick: { show: false } },
+      yAxis: { type: "value", min: 0, max: 5, interval: 1, axisLabel: axLbl, splitLine: split },
+      series: [{ type: "bar", barCategoryGap: "36%", data: bd.map(r => r.avg_review), animationDelay: i => i * 90,
+        itemStyle: { color: x => x.dataIndex >= 3 ? C.orange : C.blue, borderRadius: [6, 6, 0, 0] },
+        label: { show: true, position: "top", color: C.fg, fontSize: 12.5, fontFamily: C.mono, formatter: x => fmt(x.value, 2) } }],
+    });
+    const revOpt = () => ({
+      ...anim, grid: { left: 40, right: 8, top: 26, bottom: 46 },
+      tooltip: { ...tip, trigger: "item", formatter: x => { const r = br[x.dataIndex]; return `<b>รีวิวแรก ${r.score} ดาว</b><br>กลับมาภายใน 180 วัน ${fmt(r.repeat_pct, 2)}%<br><span style="color:${C.fg2}">n = ${fmt(r.n)} คน</span>`; } },
+      xAxis: { type: "category", data: br.map(r => r.score + "★"), axisLabel: { color: C.fg2, fontSize: 12 }, axisLine: { lineStyle: { color: C.hair } }, axisTick: { show: false } },
+      yAxis: { type: "value", min: 0, axisLabel: { ...axLbl, formatter: v => v + "%" }, splitLine: split },
+      series: [{ type: "bar", barCategoryGap: "36%", data: br.map(r => r.repeat_pct), animationDelay: i => i * 90,
+        itemStyle: { color: C.blue, borderRadius: [6, 6, 0, 0] },
+        label: { show: true, position: "top", color: C.fg, fontSize: 12.5, fontFamily: C.mono, formatter: x => fmt(x.value, 1) + "%" } }],
+    });
+    ch("cDelay").setOption(delayOpt(), true); ch("cRev").setOption(revOpt(), true);
+    if (!fromFilter) { replay("cDelay", delayOpt); replay("cRev", revOpt); }
+    $("revNote").textContent = `ลูกค้า ${fmt(q3.cohort_n)} คนที่ซื้อครั้งแรกก่อน 4 มี.ค. 2018 · เฉลี่ยรวม ${fmt(q3.overall_repeat_pct, 2)}%`;
+
+    // playbook + timeline
+    const plays = [
+      ["วัน 0–14", "Second-purchase offer", `${fmt(g.within_30, 0)}% ของคนที่จะกลับมา กลับมาในเดือนแรก ส่งคูปองซื้อครั้งที่ 2 ทันทีหลังได้รับของ`],
+      [`ก่อนวัน ${fmt(g.p50)}`, "Automated reminder", `ครึ่งหนึ่งกลับมาภายใน ${fmt(g.p50)} วัน ตั้ง trigger แนะนำสินค้าและส่วนลดก่อนถึงจุดนี้ อย่ารอถึง 3–6 เดือน`],
+      ["ทันทีที่รู้ว่าจะช้า", "Service recovery", `ส่งช้า 8+ วันได้ 1–2 ดาว ${fmt(bd[4].low_review_pct, 0)}% แจ้งลูกค้าก่อนพร้อมคูปองชดเชย ก่อนที่ลูกค้าจะไปเขียนรีวิว`],
+    ];
+    $("plays").innerHTML = plays.map(([w, h, t]) => `<div class="play rise"><span class="when">${w}</span><h3>${h}</h3><p>${t}</p></div>`).join("");
+    const X = v => 20 + (Math.min(v, 360) / 360) * 960;
+    const ticks = [[0, "ซื้อครั้งแรก"], [14, "14d"], [g.p50, `P50 ${fmt(g.p50)}d`], [g.p75, `P75 ${fmt(g.p75)}d`], [360, "360d"]].filter(t => t[0] != null);
+    $("tl").innerHTML = `<line x1="20" y1="18" x2="980" y2="18" stroke="${C.hair}" stroke-width="2"/>
+      <rect x="${X(0)}" y="15" width="${X(14) - X(0)}" height="6" rx="3" fill="${C.orangeHi}"/>
+      <rect x="${X(14)}" y="15" width="${Math.max(0, X(g.p50 || 0) - X(14))}" height="6" rx="3" fill="${C.blue}"/>` +
+      ticks.map(([v, t], i) => `<circle cx="${X(v)}" cy="18" r="5" fill="${C.fg}"/><text x="${X(v)}" y="46" fill="${C.fg2}" font-size="13" font-family="${C.mono}" text-anchor="${i === 0 ? "start" : i === ticks.length - 1 ? "end" : "middle"}">${t}</text>`).join("");
+
+    $("segTbl").innerHTML = `<thead><tr><th>กลุ่ม</th><th>เกณฑ์</th><th class="r">ลูกค้า</th><th class="r">% ลูกค้า</th><th class="r">% รายได้</th><th class="r">LTV</th><th class="r">Recency (วัน)</th></tr></thead><tbody>` +
+      segs.map(s => `<tr><td>${s.label}</td><td>${s.rule}</td><td class="r">${fmt(s.customers)}</td><td class="r">${fmt(s.cust_pct, 1)}%</td><td class="r">${fmt(s.rev_pct, 1)}%</td><td class="r">R$${fmt(s.avg_ltv, 0)}</td><td class="r">${fmt(s.avg_recency)}</td></tr>`).join("") + "</tbody>";
+  }
+
+  // ================= static notes
+  const c = D.meta.cleaning;
+  $("notes").innerHTML = `
+    <div><b>แหล่งข้อมูล</b><ul>
+      <li>${D.meta.source} (Kaggle: olistbr/brazilian-ecommerce)</li>
+      <li>ใช้ 4 ตาราง: orders, customers, order_payments, order_reviews</li>
+      <li>ช่วงวิเคราะห์ ${D.meta.period} · วันอ้างอิง Recency ${D.meta.ref_date}</li>
+      <li>นับลูกค้าด้วย customer_unique_id เพราะ customer_id เปลี่ยนทุกออเดอร์</li></ul></div>
+    <div><b>การทำความสะอาด</b><ul>
+      <li>ออเดอร์ตั้งต้น ${fmt(c.orders_raw)} → เหลือ ${fmt(c.orders_clean)} ออเดอร์ / ${fmt(c.customers_clean)} ลูกค้า</li>
+      <li>ตัดสถานะที่ไม่ใช่ delivered ${fmt(c.removed_not_delivered)} · นอกช่วงเวลา ${fmt(c.removed_out_of_range)}</li>
+      <li>รีวิวซ้ำ ${fmt(c.dup_reviews_removed)} รายการ เก็บรีวิวล่าสุด · ไม่มีรีวิว ${fmt(c.missing_review)} ออเดอร์</li>
+      <li>รวมออเดอร์ที่ห่างกัน &lt; 1 วันเป็นการซื้อครั้งเดียว ${fmt(c.split_orders_merged)} ออเดอร์</li></ul></div>`;
+  $("foot").innerHTML = `Data: Brazilian E-Commerce Public Dataset by Olist · CC BY-NC-SA 4.0 · R$ = Brazilian Real · 01219482 Data Visualization, Kasetsart University Chalermphrakiat Sakon Nakhon Province Campus`;
+
+  render(false);
+  let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => Object.values(charts).forEach(c => c.resize()), 120); });
+})();
+</script>

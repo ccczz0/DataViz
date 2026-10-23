@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231d1d1f'/%3E%3Crect x='7' y='16' width='4' height='9' rx='1.5' fill='%232a78d6'/%3E%3Crect x='14' y='10' width='4' height='15' rx='1.5' fill='%232a78d6'/%3E%3Crect x='21' y='6' width='4' height='19' rx='1.5' fill='%23eb6834'/%3E%3C/svg%3E">
+<style>
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; font-size: 14px; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+<title>Olist Customer Pulse</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="CRM storytelling dashboard: repeat-purchase timing, delivery delays, RFM segments — Olist Brazilian e-commerce 2017–2018">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: Apple-style light product page told like a reel — hero statement (scroll-linked) → glass filter bar →
+   spec grid → four "stages" (sticky camera frame that punches in/out and cuts between charts while captions scroll beside) →
+   playbook with self-drawing timeline → notes. Deliberate single light look; every color set below. */
+:root {
+  color-scheme: light;
+  --bg: #ffffff;
+  --band: #f5f5f7;
+  --card: #ffffff;
+  --fg: #1d1d1f;
+  --fg-2: #6e6e73;
+  --fg-3: #86868b;
+  --mute: #c7c7cc;
+  --hair: #d2d2d7;
+  --grid: #ececf0;
+  --link: #0066cc;
+  --blue: #2a78d6;        /* series 1 */
+  --orange: #eb6834;      /* series 2 */
+  --dim: #dcdce1;         /* de-emphasised marks */
+  --glass: rgba(251, 251, 253, 0.8);
+  --shadow: 0 2px 6px rgba(0,0,0,.04), 0 18px 48px rgba(0,0,0,.08);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Inter", "Noto Sans Thai", "Sukhumvit Set", "Thonburi", "Leelawadee UI", sans-serif;
+  --nav: 52px;
+  --sec: #ffffff;         /* background of the current section (dock uses it on small screens) */
+  --ease: cubic-bezier(.65, 0, .35, 1);
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; overflow-x: hidden; }
+@supports (overflow: clip) { html { overflow-x: clip; } }
+body {
+  margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font);
+  font-size: 17px; line-height: 1.5; letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 40; background: var(--glass); }
+h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; letter-spacing: -0.022em; }
+p { margin: 0; }
+.tnum { font-variant-numeric: tabular-nums; }
+.wrap { max-width: 1080px; margin: 0 auto; }
+.band { --sec: var(--band); margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); background: var(--band); }
+section { padding-block: clamp(72px, 11vw, 140px); }
+.eyebrow { font-size: 17px; font-weight: 600; color: var(--orange); }
+.eyebrow.b { color: var(--blue); }
+.h-xl { font-size: clamp(40px, 6.4vw, 72px); line-height: 1.1; font-weight: 700; }
+.h-lg { font-size: clamp(32px, 4.8vw, 56px); line-height: 1.12; font-weight: 700; }
+.lead { font-size: clamp(19px, 2vw, 24px); line-height: 1.42; color: var(--fg-2); max-width: 36ch; font-weight: 500; }
+.grad { background: linear-gradient(90deg, #2a78d6 0%, #8a5cf0 50%, #eb6834 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* scroll-linked text light-up (Apple style). Default = fully lit; JS drives --rp in both scroll directions. */
+.lit { --rp: 100%; background: linear-gradient(90deg, var(--fg) var(--rp), var(--mute) calc(var(--rp) + 12%)); -webkit-background-clip: text; background-clip: text; color: transparent; padding-bottom: .08em; }
+
+/* entrance/exit motion — replays every time an element crosses the viewport, scrolling down or up */
+.fx { transition: transform 1s var(--ease-out), opacity 1s var(--ease-out), filter 1s var(--ease-out); }
+.js .fx:not(.in) { transform: translateY(40px) scale(.96); opacity: .25; filter: blur(4px); }
+.js .fx.zoom:not(.in) { transform: scale(.86); }
+.fx.d1 { transition-delay: .06s; } .fx.d2 { transition-delay: .12s; } .fx.d3 { transition-delay: .18s; }
+
+/* ---------- hero */
+.hero { padding-top: clamp(64px, 10vw, 120px); padding-bottom: clamp(40px, 6vw, 80px); text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.hero .kicker { font-size: 14px; color: var(--fg-2); font-weight: 500; }
+.hero h1 { font-size: clamp(44px, 7.6vw, 88px); font-weight: 700; line-height: 1.05; letter-spacing: -0.035em; }
+.hero-stat { font-weight: 700; font-size: clamp(110px, 22vw, 260px); line-height: .95; letter-spacing: -0.055em; transform: scale(calc(1 - var(--hp, 0) * .18)) translateY(calc(var(--hp, 0) * 30px)); will-change: transform; }
+.hero .lead { text-align: center; max-width: 30ch; }
+.dots { width: 100%; max-width: 1000px; margin-top: 28px; transform: translateY(calc(var(--hp, 0) * -40px)) scale(calc(1 + var(--hp, 0) * .06)); }
+#dotfield { width: 100%; aspect-ratio: 50 / 20; display: block; max-width: 100%; }
+.dot-key { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 22px; font-size: 14px; color: var(--fg-2); margin-top: 14px; }
+.dot-key i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; vertical-align: 1px; }
+.scroll-cue { margin-top: 26px; font-size: 13px; color: var(--fg-3); display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.scroll-cue span { width: 22px; height: 34px; border: 1.5px solid var(--hair); border-radius: 12px; position: relative; }
+.scroll-cue span::after { content: ""; position: absolute; left: 50%; top: 7px; width: 3px; height: 7px; border-radius: 2px; background: var(--fg-3); transform: translateX(-50%); animation: cue 1.8s var(--ease) infinite; }
+@keyframes cue { 0% { opacity: 0; transform: translate(-50%, 0); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, 12px); } }
+
+/* ---------- glass filter bar */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: var(--glass); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid rgba(0,0,0,.08); }
+.bar .wrap { display: flex; align-items: center; gap: 10px 14px; padding-block: 9px; min-width: 0; }
+.bar .brand { font-weight: 600; font-size: 19px; margin-right: auto; white-space: nowrap; }
+.bar .ctrls { display: flex; align-items: center; gap: 8px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.bar .ctrls::-webkit-scrollbar { display: none; }
+.bar label { font-size: 12.5px; color: var(--fg-2); }
+select { font: inherit; font-size: 13px; color: var(--fg); background: #fff; border: 1px solid var(--hair); border-radius: 980px; padding: 5px 12px; max-width: 220px; }
+.pills { display: flex; gap: 2px; }
+.pill { font: inherit; font-size: 12.5px; white-space: nowrap; color: var(--fg); background: transparent; border: 1px solid transparent; border-radius: 980px; padding: 4px 11px; cursor: pointer; transition: background .3s, color .3s; }
+.pill:hover { background: rgba(0,0,0,.05); }
+.pill[aria-pressed="true"] { background: var(--fg); color: #fff; }
+select:focus-visible, .pill:focus-visible, summary:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+
+/* ---------- specs */
+.specs, .trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 56px; }
+.spec { background: var(--card); border-radius: 26px; padding: 30px 26px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.trio .spec { background: var(--band); }
+.spec .v { font-size: clamp(38px, 4.8vw, 58px); font-weight: 700; letter-spacing: -0.04em; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.spec .k { font-size: 17px; font-weight: 600; }
+.spec .s { font-size: 14px; color: var(--fg-2); }
+.spec.hot .v { color: var(--orange); }
+
+/* ---------- STAGE (reel) */
+.stage-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 48px; margin-top: 56px; align-items: start; }
+.dock { position: sticky; top: calc(var(--nav) + env(safe-area-inset-top, 0px) + 20px); z-index: 3; min-width: 0; }
+.frame { position: relative; background: var(--card); border-radius: 30px; box-shadow: var(--shadow); overflow: hidden; min-width: 0; }
+.hud { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 16px 20px 0; position: relative; z-index: 3; }
+.hud .tag { font-size: 12px; font-weight: 600; color: var(--fg-2); letter-spacing: .02em; }
+.hud .prog { display: flex; gap: 5px; }
+.hud .prog i { width: 18px; height: 4px; border-radius: 2px; background: var(--grid); transition: background .4s, width .4s var(--ease); }
+.hud .prog i.on { background: var(--fg); width: 30px; }
+.lens { position: relative; height: clamp(300px, 60vh, 440px); overflow: hidden; contain: paint; }
+.camera { position: absolute; inset: 0; transform-origin: var(--ox, 50%) var(--oy, 50%); transform: scale(var(--cs, 1)); transition: transform 1.15s var(--ease), transform-origin 1.15s var(--ease); will-change: transform; }
+.layer { position: absolute; inset: 0; padding: 4px 10px 6px; opacity: 0; transform: scale(1.12); filter: blur(10px); pointer-events: none;
+  transition: opacity .7s var(--ease), transform .9s var(--ease), filter .7s var(--ease); }
+.layer.on { opacity: 1; transform: none; filter: none; pointer-events: auto; }
+.layer.out { transform: scale(.9); }
+.layer .chart { width: 100%; height: 100%; }
+.lower { position: absolute; left: 18px; bottom: 16px; z-index: 4; max-width: calc(100% - 36px); background: rgba(29,29,31,.88); color: #fff; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-radius: 14px; padding: 9px 14px; font-size: 14px; font-weight: 500; line-height: 1.35; transition: transform .55s var(--ease-out), opacity .4s; }
+.lower:empty { display: none; }
+.lower.swap { transform: translateY(140%); opacity: 0; transition-duration: .25s; }
+.lower b { color: #ffb08f; font-weight: 600; }
+.flash { position: absolute; inset: 0; z-index: 5; background: #fff; opacity: 0; pointer-events: none; }
+.flash.go { animation: flash .45s ease-out; }
+@keyframes flash { 0% { opacity: .55; } 100% { opacity: 0; } }
+
+.steps { display: flex; flex-direction: column; gap: 34vh; padding-block: 12vh 34vh; min-width: 0; }
+.step { padding: 4px 0 4px 22px; border-left: 3px solid var(--grid); transition: border-color .5s var(--ease); }
+.step > * { transition: opacity .6s var(--ease-out), transform .7s var(--ease-out); opacity: .28; transform: translateX(-10px); }
+.step.on { border-color: var(--orange); }
+.step.on > * { opacity: 1; transform: none; }
+.step.on > :nth-child(2) { transition-delay: .07s; } .step.on > :nth-child(3) { transition-delay: .14s; }
+.step .n { font-size: clamp(44px, 5.2vw, 64px); font-weight: 700; letter-spacing: -0.045em; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.step .n.o { color: var(--orange); } .step .n.b { color: var(--blue); }
+.step h3 { font-size: 22px; font-weight: 600; margin-top: 6px; letter-spacing: -0.02em; }
+.step p { font-size: 16px; color: var(--fg-2); margin-top: 8px; line-height: 1.55; }
+.no-io .step > * { opacity: 1; transform: none; }
+
+/* ---------- callout / playbook */
+.callout { display: flex; justify-content: center; align-items: baseline; flex-wrap: wrap; gap: 6px 22px; margin-top: 44px; }
+.callout .big { font-size: clamp(84px, 15vw, 176px); font-weight: 700; letter-spacing: -0.055em; line-height: .95; font-variant-numeric: tabular-nums; }
+.callout .vs { font-size: clamp(30px, 4vw, 48px); font-weight: 600; color: var(--fg-3); }
+.callout-cap { display: grid; grid-template-columns: 1fr 1fr; max-width: 640px; margin: 10px auto 0; text-align: center; font-size: 15px; color: var(--fg-2); }
+.plays { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 28px; }
+.play { background: var(--band); border-radius: 26px; padding: 30px 26px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.play .when { font-size: 14px; font-weight: 600; color: var(--orange); }
+.play h3 { font-size: 24px; letter-spacing: -0.025em; }
+.play p { color: var(--fg-2); font-size: 16px; line-height: 1.55; }
+.timeline { margin-top: 56px; }
+.timeline svg { width: 100%; height: 70px; display: block; overflow: visible; }
+.timeline .draw { stroke-dasharray: 1000; stroke-dashoffset: 1000; transition: stroke-dashoffset 1.6s var(--ease); }
+.timeline.in .draw { stroke-dashoffset: 0; }
+.timeline .pop { transform-box: fill-box; transform-origin: center; transform: scale(0); transition: transform .5s var(--ease-out); }
+.timeline.in .pop { transform: scale(1); }
+.timeline text { opacity: 0; transition: opacity .6s; }
+.timeline.in text { opacity: 1; }
+.no-io .timeline .draw { stroke-dashoffset: 0; } .no-io .timeline .pop { transform: none; } .no-io .timeline text { opacity: 1; }
+
+details { background: var(--band); border-radius: 22px; padding: 18px 24px; margin-top: 56px; }
+summary { cursor: pointer; font-weight: 600; font-size: 17px; }
+.notes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; margin-top: 14px; font-size: 14.5px; color: var(--fg-2); }
+.notes b { color: var(--fg); }
+.notes ul { margin: 6px 0 0; padding-left: 18px; }
+.tbl { overflow-x: auto; margin-top: 18px; }
+table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 14px; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--hair); }
+th { color: var(--fg-2); font-weight: 500; font-size: 12.5px; }
+td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; }
+footer { padding-block: 28px 56px; border-top: 1px solid var(--hair); font-size: 12.5px; color: var(--fg-3); }
+
+/* ---------- responsive
+   ≥1024 (laptop, iPad landscape): chart left, captions right.
+   <1024 (phones, iPad portrait): chart docked under the filter bar, caption cards scroll underneath it. */
+@media (max-width: 1023px) {
+  section { padding-block: clamp(56px, 10vw, 96px); }
+  .stage-grid { grid-template-columns: minmax(0, 1fr); gap: 0; margin-top: 32px; }
+  .dock { top: calc(var(--nav) + env(safe-area-inset-top, 0px)); background: var(--sec);
+    margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding: 10px max(16px, env(safe-area-inset-right, 0px)) 14px max(16px, env(safe-area-inset-left, 0px)); }
+  .frame { max-width: 760px; margin-inline: auto; border-radius: 24px; }
+  .lens { height: clamp(230px, 42vh, 480px); }
+  .lower { position: relative; left: auto; bottom: auto; display: block; width: fit-content; max-width: calc(100% - 24px); margin: 0 12px 12px; }
+  .steps { gap: 62vh; padding-block: 8vh 60vh; max-width: 640px; width: 100%; margin-inline: auto; position: relative; z-index: 1; }
+  .step { background: var(--card); border-radius: 0 18px 18px 0; padding: 18px 20px; box-shadow: var(--shadow); }
+  .band .step { box-shadow: 0 2px 6px rgba(0,0,0,.04), 0 10px 30px rgba(0,0,0,.06); }
+  .step > * { opacity: .55; transform: none; }
+  .step .n { font-size: clamp(38px, 9vw, 56px); }
+  .step h3 { font-size: 20px; }
+  .step p { font-size: 15.5px; }
+  .specs, .trio { margin-top: 36px; }
+  .plays { grid-template-columns: minmax(0, 1fr); max-width: 640px; }
+  .callout { margin-top: 28px; }
+}
+@supports (height: 1svh) {
+  .lens { height: clamp(300px, 60svh, 440px); }
+  @media (max-width: 1023px) {
+    .lens { height: clamp(230px, 42svh, 480px); }
+    .steps { gap: 62svh; padding-block: 8svh 60svh; }
+  }
+}
+@media (max-width: 1023px) and (min-width: 700px) {   /* iPad portrait */
+  .specs, .trio { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .plays { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: none; }
+}
+@media (max-width: 699px) {
+  body { font-size: 16px; }
+  .specs, .trio { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+  .spec { padding: 20px 16px; border-radius: 20px; gap: 4px; }
+  .spec .v { font-size: clamp(26px, 8.4vw, 34px); }
+  .spec .k { font-size: 15px; } .spec .s { font-size: 13px; }
+  .notes { grid-template-columns: minmax(0, 1fr); }
+  .lower { font-size: 13px; }
+  .hud { padding: 12px 14px 0; }
+  .callout { gap: 2px 12px; }
+  .callout .big { font-size: clamp(56px, 17vw, 96px); }
+  .callout .vs { font-size: 24px; }
+  .callout-cap { font-size: 13px; }
+  .play { padding: 24px 20px; } .play h3 { font-size: 21px; }
+  details { padding: 16px 18px; }
+  .bar .brand { font-size: 16px; }
+}
+@media (max-width: 420px) { .bar .brand { display: none; } .bar .wrap { justify-content: center; } }
+/* phones held sideways (short landscape): go back to chart-left / captions-right so the chart isn't squeezed */
+@media (max-width: 1023px) and (orientation: landscape) and (max-height: 560px) {
+  .stage-grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 24px; }
+  .dock { top: calc(var(--nav) + env(safe-area-inset-top, 0px) + 8px); background: transparent; margin-inline: 0; padding: 0; }
+  .lens { height: max(190px, calc(100vh - var(--nav) - 92px)); }
+  .lower { margin: 0 10px 10px; font-size: 12.5px; }
+  .steps { gap: 60vh; padding-block: 20vh 50vh; }
+  .step .n { font-size: 34px; } .step h3 { font-size: 17px; } .step p { font-size: 14px; }
+  .hero-stat { font-size: 26vh; }
+}
+/* touch devices: drop blur filters (expensive on mobile GPUs), keep transform/opacity motion */
+@media (hover: none), (max-width: 1023px) {
+  .js .fx:not(.in) { filter: none; }
+  .layer { filter: none !important; }
+  .bar, .lower { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .bar { background: rgba(251, 251, 253, .96); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .fx, .camera, .layer, .lower, .step > *, .timeline * { transition: none !important; }
+  .js .fx:not(.in) { transform: none; opacity: 1; filter: none; }
+  .camera { transform: none !important; }
+  .scroll-cue span::after { animation: none; }
+}
+</style>
+</head>
+<body>
+<!-- ================= HERO ================= -->
+<header class="hero wrap" id="hero">
+  <span class="kicker">01219482 Data Visualization · Olist Brazilian E‑Commerce · ม.ค. 2017 – ส.ค. 2018</span>
+  <h1>Olist Customer Pulse</h1>
+  <div class="hero-stat grad tnum" id="heroStat">2.1%</div>
+  <p class="lead">ของลูกค้ากลับมาซื้อครั้งที่สอง ที่เหลือซื้อครั้งเดียวแล้วหายไป</p>
+  <div class="dots">
+    <canvas id="dotfield" width="1000" height="400" role="img" aria-label="จุด 1,000 จุดแทนลูกค้า จุดสีส้มคือสัดส่วนที่กลับมาซื้อซ้ำ"></canvas>
+    <div class="dot-key"><span><i style="background:var(--mute)"></i>ซื้อครั้งเดียว</span><span><i style="background:var(--orange)"></i>กลับมาซื้อซ้ำ</span><span id="dotNote">1 จุด ≈ 93 คน</span></div>
+  </div>
+  <div class="scroll-cue" aria-hidden="true"><span></span>เลื่อนลงเพื่อดูเรื่องราว</div>
+</header>
+
+<!-- ================= FILTER ================= -->
+<nav class="bar" aria-label="ตัวกรอง">
+  <div class="wrap">
+    <span class="brand">Customer Pulse</span>
+    <div class="ctrls">
+      <label for="state">รัฐ</label>
+      <select id="state"></select>
+      <div class="pills" id="pills"></div>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <div class="band"><section class="wrap" aria-labelledby="specH">
+    <span class="eyebrow b" id="scopeEyebrow">ทั้งประเทศ</span>
+    <h2 class="h-xl lit" id="specH" style="margin-top:8px">ลูกค้าเกือบแสนคน กลับมาซื้อซ้ำแค่หยิบมือ</h2>
+    <div class="specs" id="specs"></div>
+  </section></div>
+
+  <section class="wrap" aria-labelledby="q1H">
+    <span class="eyebrow">Q1 · จังหวะเวลา</span>
+    <h2 class="h-lg lit" id="q1H" style="margin-top:8px">ลูกค้ากลับมาซื้อครั้งที่ 2 หลังจากผ่านไปกี่วัน?</h2>
+    <div class="stage-grid" data-stage="q1"></div>
+  </section>
+
+  <div class="band"><section class="wrap" aria-labelledby="trH">
+    <span class="eyebrow b">บริบท · 20 เดือนของ Olist</span>
+    <h2 class="h-lg lit" id="trH" style="margin-top:8px">ยอดโตทุกเดือน แต่ทุกครั้งที่ส่งช้า รีวิวก็ตกตาม</h2>
+    <div class="stage-grid" data-stage="trend"></div>
+  </section></div>
+
+  <section class="wrap" aria-labelledby="q2H">
+    <span class="eyebrow">Q2 · กลุ่มลูกค้า RFM</span>
+    <h2 class="h-lg lit" id="q2H" style="margin-top:8px">คนที่กลับมามีน้อย แต่ใช้จ่ายเกือบสองเท่า</h2>
+    <div class="stage-grid" data-stage="q2"></div>
+    <div class="trio" id="trio"></div>
+  </section>
+
+  <div class="band"><section class="wrap" aria-labelledby="q3H">
+    <span class="eyebrow">Q3 · สัญญาณเตือนก่อนลูกค้าหาย</span>
+    <h2 class="h-lg lit" id="q3H" style="margin-top:8px">ส่งช้า 8 วัน รีวิวดิ่งเหลือไม่ถึงสองดาว</h2>
+    <div class="callout fx zoom" aria-label="รีวิวเฉลี่ยเมื่อส่งช้าเทียบเมื่อส่งก่อนกำหนด">
+      <span class="big" id="starLate" style="color:var(--orange)">1.7★</span><span class="vs">vs</span><span class="big" id="starEarly" style="color:var(--blue)">4.3★</span>
+    </div>
+    <div class="callout-cap fx d2"><span>ส่งช้า 8 วันขึ้นไป</span><span>ส่งก่อนกำหนด ≥ 7 วัน</span></div>
+    <div class="stage-grid" data-stage="q3"></div>
+  </section></div>
+
+  <section class="wrap" aria-labelledby="pbH">
+    <span class="eyebrow b">So what · CRM Playbook</span>
+    <h2 class="h-lg lit" id="pbH" style="margin-top:8px">สามจังหวะที่ทีม CRM ควรลงมือ</h2>
+    <div class="timeline fx" id="tlWrap" aria-hidden="true"><svg id="tl" viewBox="0 0 1000 70"></svg></div>
+    <div class="plays" id="plays"></div>
+    <details>
+      <summary>ข้อมูล นิยาม และการทำความสะอาดข้อมูล</summary>
+      <div class="notes" id="notes"></div>
+      <div class="tbl"><table id="segTbl"></table></div>
+      <div class="tbl"><table id="stTbl"></table></div>
+    </details>
+  </section>
+</main>
+<footer class="wrap" id="foot"></footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+<script src="data.js"></script>
+<script>
+(function () {
+  document.documentElement.classList.add("js");
+  const D = window.DASH_DATA;
+  const $ = (id) => document.getElementById(id);
+  const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const HAS_IO = "IntersectionObserver" in window;
+  if (!HAS_IO) document.body.classList.add("no-io");
+  const fmt = (n, d = 0) => n == null || isNaN(n) ? "–" : Number(n).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+  const brl = (n) => n == null ? "–" : "R$" + (n >= 1e6 ? fmt(n / 1e6, 2) + "M" : n >= 1e4 ? fmt(n / 1e3, 0) + "k" : fmt(n, 0));
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const C = { blue: css("--blue"), orange: css("--orange"), fg: css("--fg"), fg2: css("--fg-2"), fg3: css("--fg-3"), hair: css("--hair"), grid: css("--grid"), dim: css("--dim"), mute: css("--mute"), font: css("--font") };
+  const ST = { SP: "São Paulo", RJ: "Rio de Janeiro", MG: "Minas Gerais", RS: "Rio Grande do Sul", PR: "Paraná", SC: "Santa Catarina", BA: "Bahia", DF: "Distrito Federal", ES: "Espírito Santo", GO: "Goiás", PE: "Pernambuco", CE: "Ceará", PA: "Pará", MT: "Mato Grosso", MA: "Maranhão", MS: "Mato Grosso do Sul", PB: "Paraíba", PI: "Piauí", RN: "Rio Grande do Norte", AL: "Alagoas", SE: "Sergipe", TO: "Tocantins", RO: "Rondônia", AM: "Amazonas", AC: "Acre", AP: "Amapá", RR: "Roraima" };
+  const TH_M = ["", "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+  const monthLbl = (s) => { const [y, m] = s.split("-"); return TH_M[+m] + " " + y.slice(2); };
+
+  // ================= state filter
+  let cur = "all";
+  try { const s = localStorage.getItem("olist_state"); if (s && (s === "all" || D.states[s])) cur = s; } catch (e) {}
+  const sizes = D.meta.state_customers;
+  $("state").innerHTML = `<option value="all">ทั้งประเทศ</option>` + Object.keys(sizes).map(s => `<option value="${s}">${s} · ${ST[s] || s}</option>`).join("");
+  $("pills").innerHTML = ["all", ...Object.keys(sizes).slice(0, 4)].map(s => `<button type="button" class="pill" data-s="${s}">${s === "all" ? "ทั้งหมด" : s}</button>`).join("");
+  $("pills").addEventListener("click", e => { const b = e.target.closest(".pill"); if (b) setState(b.dataset.s); });
+  $("state").addEventListener("change", e => setState(e.target.value));
+  function setState(s) { if (!D.states[s] && s !== "all") return; cur = s; try { localStorage.setItem("olist_state", s); } catch (e) {} renderAll(); }
+  const data = () => cur === "all" ? D.all : D.states[cur];
+
+  // ================= count-up
+  function countUp(el) {
+    const to = el.dataset.to; if (to === undefined || to === "") return;
+    const v = +to, dec = +el.dataset.dec || 0, pre = el.dataset.pre || "", suf = el.dataset.suf || "";
+    const final = pre + fmt(v, dec) + suf;
+    if (RM) { el.textContent = final; return; }
+    const t0 = performance.now(), dur = 1200;
+    cancelAnimationFrame(el._raf);
+    const tick = (t) => { const p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 4); el.textContent = pre + fmt(v * e, dec) + suf; if (p < 1) el._raf = requestAnimationFrame(tick); else el.textContent = final; };
+    el._raf = requestAnimationFrame(tick);
+  }
+  const cu = (v, dec, pre, suf) => `data-to="${v ?? ""}" data-dec="${dec}" data-pre="${pre || ""}" data-suf="${suf || ""}"`;
+
+  // ================= bidirectional reveal: adds .in on enter, removes it on exit, so motion replays both ways
+  const revealIO = HAS_IO ? new IntersectionObserver(ents => ents.forEach(en => {
+    const el = en.target;
+    if (en.isIntersecting) { el.classList.add("in"); el.querySelectorAll("[data-to]").forEach(countUp); el._onIn && el._onIn(); }
+    else el.classList.remove("in");
+  }), { threshold: 0.18 }) : null;
+  const watch = (el) => { if (revealIO) revealIO.observe(el); else el.classList.add("in"); };
+
+  // ================= scroll-linked: hero shrink + headline light-up
+  const lits = [...document.querySelectorAll(".lit")];
+  function onScroll() {
+    const vh = innerHeight, hero = $("hero").getBoundingClientRect();
+    const hp = Math.min(1, Math.max(0, -hero.top / Math.max(hero.height, 1)));
+    if (!RM) document.documentElement.style.setProperty("--hp", hp.toFixed(3));
+    lits.forEach(el => {
+      const r = el.getBoundingClientRect();
+      const p = RM ? 1 : Math.min(1, Math.max(0, (vh * .9 - r.top) / (vh * .45)));
+      el.style.setProperty("--rp", (p * 112 - 12).toFixed(1) + "%");
+    });
+  }
+  let sTick = false;
+  addEventListener("scroll", () => { if (!sTick) { sTick = true; requestAnimationFrame(() => { onScroll(); sTick = false; }); } }, { passive: true });
+
+  // ================= dot field (unit chart)
+  const cv = $("dotfield"), cx = cv.getContext("2d");
+  let dotN = 21, dotT0 = performance.now(), heroOn = true, dotLoop = false;
+  let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const order = Array.from({ length: 1000 }, (_, i) => i).sort(() => rnd() - .5);
+  function drawDots(now) {
+    const W = cv.width, H = cv.height, cols = 50, gx = W / cols, gy = H / 20;
+    cx.clearRect(0, 0, W, H);
+    const lit = new Set(order.slice(0, dotN));
+    const p = RM ? 1 : Math.min(1, (now - dotT0) / 1600);
+    for (let i = 0; i < 1000; i++) {
+      const c = i % cols, r = (i / cols) | 0, x = gx * (c + .5), y = gy * (r + .5);
+      const w = Math.min(1, Math.max(0, p * 1.7 - (Math.hypot(c - 25, (r - 10) * 2.5) / 30) * .7));
+      if (lit.has(i)) {
+        const pulse = RM ? .5 : (Math.sin(now / 480 + i) + 1) / 2;
+        cx.fillStyle = `rgba(235,104,52,${(.10 + .16 * pulse) * w})`; cx.beginPath(); cx.arc(x, y, gx * (.42 + .16 * pulse), 0, 7); cx.fill();
+        cx.fillStyle = `rgba(235,104,52,${.3 + .7 * w})`; cx.beginPath(); cx.arc(x, y, gx * .22 * (.4 + .6 * w), 0, 7); cx.fill();
+      } else {
+        cx.fillStyle = `rgba(174,174,178,${.25 + .5 * w})`; cx.beginPath(); cx.arc(x, y, gx * .15, 0, 7); cx.fill();
+      }
+    }
+    if (!RM && !document.hidden && heroOn) requestAnimationFrame(drawDots); else dotLoop = false;
+  }
+  const startDots = () => { if (!dotLoop) { dotLoop = true; requestAnimationFrame(drawDots); } };
+  startDots();
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && !RM) startDots(); });
+  if (HAS_IO) new IntersectionObserver(e => { heroOn = e[0].isIntersecting; if (heroOn) { dotT0 = performance.now(); startDots(); } }, { threshold: 0 }).observe(cv);
+
+  // ================= echarts base
+  const tip = { backgroundColor: "rgba(255,255,255,.96)", borderColor: C.hair, borderRadius: 12, padding: [10, 12], textStyle: { color: C.fg, fontSize: 13, fontFamily: C.font }, confine: true, extraCssText: "box-shadow:0 8px 28px rgba(0,0,0,.12);" };
+  const NARROW = () => innerWidth < 700;
+  const ax = { color: C.fg3, fontSize: innerWidth < 700 ? 10.5 : 11.5, fontFamily: C.font };
+  const split = { lineStyle: { color: C.grid } };
+  const axisLine = { lineStyle: { color: C.hair } };
+  const A = RM ? { animation: false } : { animation: true, animationDuration: 1000, animationEasing: "cubicOut", animationDurationUpdate: 800, animationEasingUpdate: "cubicInOut" };
+  const lab = (extra) => ({ show: true, color: C.fg, fontSize: 12, fontWeight: 600, fontFamily: C.font, ...extra });
+  const grad = (rgb, a) => new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: `rgba(${rgb},${a})` }, { offset: 1, color: `rgba(${rgb},0)` }]);
+  const shadowPtr = { type: "shadow", shadowStyle: { color: "rgba(0,0,0,.03)" } };
+  const xName = (n) => ({ name: n, nameLocation: "middle", nameGap: 28, nameTextStyle: { color: C.fg3, fontSize: 12, fontFamily: C.font } });
+
+  // ---------- chart builders
+  const B = {
+    hist(d, mode) {
+      const g = d.gap, early = mode === "early";
+      return { ...A, grid: { left: 44, right: 18, top: 34, bottom: 46 },
+        tooltip: { ...tip, trigger: "axis", axisPointer: { type: "none" }, formatter: ps => { const i = ps[0].dataIndex; return `<b>${g.bins[i]} วัน</b><br>${fmt(g.counts[i])} คน · สะสม ${fmt(g.cum_pct[i], 1)}%`; } },
+        xAxis: { type: "category", data: g.bins_end.map(v => v - 15), axisLabel: { ...ax, interval: 3 }, axisLine, axisTick: { show: false }, ...xName("วันหลังซื้อครั้งแรก") },
+        yAxis: { type: "value", axisLabel: ax, splitLine: split },
+        series: [{ type: "bar", barCategoryGap: "12%", animationDelay: i => i * 22,
+          data: g.counts.map((c, i) => ({ value: c, itemStyle: { color: early ? (i < 2 ? C.orange : C.dim) : C.blue, borderRadius: [5, 5, 0, 0] } })),
+          label: early ? lab({ position: "top", formatter: x => x.dataIndex < 2 ? fmt(x.value) : "" }) : { show: false } }] };
+    },
+    cdf(d, mode) {
+      const g = d.gap, tail = mode === "tail";
+      const pts = g.cdf.map((v, i) => [i * 3, v]);
+      const ok = g.p50 != null;
+      return { ...A, grid: { left: 46, right: 22, top: 34, bottom: 46 },
+        tooltip: { ...tip, trigger: "axis", formatter: ps => `<b>ภายใน ${ps[0].value[0]} วัน</b><br>กลับมาแล้ว ${fmt(ps[0].value[1], 1)}% ของคนที่ซื้อซ้ำ` },
+        xAxis: { type: "value", min: 0, max: 360, interval: 60, axisLabel: ax, axisLine, splitLine: { show: false }, ...xName("วันหลังซื้อครั้งแรก") },
+        yAxis: { type: "value", min: 0, max: 100, interval: 25, axisLabel: { ...ax, formatter: v => v + "%" }, splitLine: split },
+        series: [{ type: "line", data: pts, showSymbol: false, smooth: .2, lineStyle: { width: 3, color: C.blue }, areaStyle: { color: grad("42,120,214", .22) },
+          markPoint: ok ? { symbol: "circle", symbolSize: 14, itemStyle: { color: "#fff", borderColor: tail ? C.fg3 : C.orange, borderWidth: 3 },
+            label: { show: true, position: "top", distance: 10, color: C.fg, fontWeight: 600, fontSize: 13, fontFamily: C.font, formatter: `50% · ${g.p50} วัน` }, data: [{ coord: [g.p50, 50] }] } : undefined,
+          markLine: ok ? { silent: true, symbol: "none", lineStyle: { type: [4, 4], color: C.fg3 }, label: { show: false }, data: [[{ coord: [g.p50, 0] }, { coord: [g.p50, 50] }], [{ coord: [0, 50] }, { coord: [g.p50, 50] }]] } : undefined,
+          markArea: tail && g.p75 != null ? { silent: true, itemStyle: { color: "rgba(235,104,52,.10)" }, label: { show: true, position: "insideTop", distance: 12, color: C.orange, fontWeight: 600, fontSize: 13, fontFamily: C.font }, data: [[{ xAxis: g.p75, name: `หลังวันที่ ${g.p75} เหลือ 25%` }, { xAxis: 360 }]] } : undefined }] };
+    },
+    volume(d, mode) {
+      const m = d.monthly, lbl = m.months.map(monthLbl), ret = mode === "returning";
+      return { ...A, grid: { left: 44, right: 12, top: 34, bottom: 40 },
+        tooltip: { ...tip, trigger: "axis", axisPointer: shadowPtr, formatter: ps => { const i = ps[0].dataIndex, t = m.new[i] + m.returning[i]; return `<b>${lbl[i]}</b><br>ลูกค้าใหม่ ${fmt(m.new[i])}<br>ซื้อซ้ำ ${fmt(m.returning[i])} (${fmt(t ? 100 * m.returning[i] / t : 0, 1)}%)<br>รายได้ ${brl(m.revenue[i])}`; } },
+        legend: { top: 2, right: 10, itemWidth: 11, itemHeight: 11, textStyle: { color: C.fg2, fontSize: 12, fontFamily: C.font }, data: [{ name: "ลูกค้าใหม่", icon: "roundRect" }, { name: "ซื้อซ้ำ", icon: "roundRect" }] },
+        xAxis: { type: "category", data: lbl, axisLabel: { ...ax, interval: NARROW() ? 3 : 2 }, axisLine, axisTick: { show: false } },
+        yAxis: { type: "value", axisLabel: { ...ax, formatter: v => v >= 1000 ? v / 1000 + "k" : v }, splitLine: split },
+        series: [
+          { name: "ลูกค้าใหม่", type: "bar", stack: "t", data: m.new, barCategoryGap: "26%", itemStyle: { color: ret ? C.dim : C.blue, borderColor: "#fff", borderWidth: 1 }, animationDelay: i => i * 30 },
+          { name: "ซื้อซ้ำ", type: "bar", stack: "t", data: m.returning, itemStyle: { color: C.orange, borderRadius: [4, 4, 0, 0], borderColor: "#fff", borderWidth: 1 }, animationDelay: i => 300 + i * 30,
+            label: ret ? lab({ position: "top", fontSize: 11, color: C.orange, formatter: x => [13, 16, 19].includes(x.dataIndex) ? fmt(x.value) : "" }) : { show: false } },
+        ] };
+    },
+    late(d) {
+      const m = d.monthly, lbl = m.months.map(monthLbl);
+      const peaks = m.late_pct.map((v, i) => [v, i]).filter(x => x[0] != null).sort((a, b) => b[0] - a[0]).slice(0, 2).map(x => x[1]);
+      return { ...A, grid: { left: 44, right: 16, top: 44, bottom: 40 },
+        tooltip: { ...tip, trigger: "axis", formatter: ps => `<b>${lbl[ps[0].dataIndex]}</b><br>ส่งช้ากว่ากำหนด ${fmt(ps[0].value, 1)}%` },
+        xAxis: { type: "category", data: lbl, boundaryGap: false, axisLabel: { ...ax, interval: NARROW() ? 3 : 2 }, axisLine, axisTick: { show: false } },
+        yAxis: { type: "value", min: 0, axisLabel: { ...ax, formatter: v => v + "%" }, splitLine: split },
+        series: [{ type: "line", data: m.late_pct, smooth: .25, symbol: "circle", symbolSize: 7, lineStyle: { width: 3, color: C.orange }, itemStyle: { color: C.orange, borderColor: "#fff", borderWidth: 2 }, areaStyle: { color: grad("235,104,52", .25) },
+          markPoint: { symbol: "circle", symbolSize: 12, itemStyle: { color: "#fff", borderColor: C.orange, borderWidth: 3 },
+            label: { show: true, position: "top", distance: 8, color: C.fg, fontWeight: 600, fontSize: 12.5, fontFamily: C.font, formatter: p => p.name },
+            data: peaks.map(i => ({ coord: [i, m.late_pct[i]], name: `${lbl[i]} · ${fmt(m.late_pct[i], 1)}%` })) } }] };
+    },
+    review(d, mode) {
+      const m = d.monthly, lbl = m.months.map(monthLbl);
+      const vals = m.avg_review.filter(v => v != null);
+      const lo = Math.floor(Math.min(...vals) * 10 - 1) / 10, hi = Math.ceil(Math.max(...vals) * 10 + 1) / 10;
+      const i0 = m.months.indexOf("2017-11"), i1 = m.months.indexOf("2018-02");
+      const narrow = innerWidth < 600;
+      const areas = mode === "mark" ? [[{ xAxis: i0, name: narrow ? "" : "Black Friday" }, { xAxis: i0 + 1 }], [{ xAxis: i1, name: narrow ? "ส่งช้า" : "ส่งช้าพุ่ง" }, { xAxis: i1 + 1 }]] : [];
+      return { ...A, grid: { left: 48, right: 16, top: 40, bottom: 40 },
+        tooltip: { ...tip, trigger: "axis", formatter: ps => { const i = ps[0].dataIndex; return `<b>${lbl[i]}</b><br>รีวิวเฉลี่ย ${fmt(m.avg_review[i], 2)}★<br>ส่งช้า ${fmt(m.late_pct[i], 1)}%`; } },
+        xAxis: { type: "category", data: lbl, boundaryGap: false, axisLabel: { ...ax, interval: NARROW() ? 3 : 2 }, axisLine, axisTick: { show: false } },
+        yAxis: { type: "value", min: lo, max: hi, interval: .1, axisLabel: { ...ax, formatter: v => v.toFixed(1) + "★" }, splitLine: split },
+        series: [{ type: "line", data: m.avg_review, smooth: .25, symbol: "circle", symbolSize: 7, lineStyle: { width: 3, color: C.blue }, itemStyle: { color: C.blue, borderColor: "#fff", borderWidth: 2 },
+          markArea: { silent: true, itemStyle: { color: "rgba(235,104,52,.12)" }, label: { show: true, position: "insideTop", distance: 6, color: C.orange, fontWeight: 600, fontSize: 12, fontFamily: C.font }, data: areas } }] };
+    },
+    seg(d) {
+      const segs = d.segments;
+      return { ...A, grid: { left: NARROW() ? 96 : 112, right: 40, top: 44, bottom: 30 },
+        legend: { top: 4, left: "center", itemWidth: 12, itemHeight: 12, itemGap: 18, textStyle: { color: C.fg2, fontSize: 12.5, fontFamily: C.font }, data: [{ name: "% ลูกค้า", icon: "roundRect" }, { name: "% รายได้", icon: "roundRect" }] },
+        tooltip: { ...tip, trigger: "axis", axisPointer: shadowPtr, formatter: ps => { const s = segs[ps[0].dataIndex]; return `<b>${s.label}</b><br>${s.rule}<br>ลูกค้า ${fmt(s.customers)} (${fmt(s.cust_pct, 1)}%)<br>รายได้ ${brl(s.revenue)} (${fmt(s.rev_pct, 1)}%)`; } },
+        yAxis: { type: "category", data: segs.map(s => s.label), inverse: true, axisLabel: { color: C.fg, fontSize: NARROW() ? 11.5 : 13, fontFamily: C.font }, axisLine, axisTick: { show: false } },
+        xAxis: { type: "value", axisLabel: { ...ax, formatter: v => v + "%" }, splitLine: split },
+        series: [
+          { name: "% ลูกค้า", type: "bar", data: segs.map(s => s.cust_pct), itemStyle: { color: C.blue, borderRadius: [0, 5, 5, 0] }, barGap: "14%", barCategoryGap: "30%", animationDelay: i => i * 60, label: lab({ position: "right", fontSize: 11, fontWeight: 500, color: C.fg2, formatter: x => fmt(x.value, 1) }) },
+          { name: "% รายได้", type: "bar", data: segs.map(s => s.rev_pct), itemStyle: { color: C.orange, borderRadius: [0, 5, 5, 0] }, animationDelay: i => 120 + i * 60, label: lab({ position: "right", fontSize: 11, fontWeight: 500, color: C.fg2, formatter: x => fmt(x.value, 1) }) },
+        ] };
+    },
+    ltv(d) {
+      const segs = d.segments, rep = (k) => k === "champions" || k === "cant_lose";
+      return { ...A, grid: { left: NARROW() ? 96 : 112, right: 60, top: 30, bottom: 30 },
+        tooltip: { ...tip, trigger: "item", formatter: x => { const s = segs[x.dataIndex]; return `<b>${s.label}</b><br>LTV เฉลี่ย R$${fmt(s.avg_ltv, 2)}<br>ซื้อล่าสุดเฉลี่ย ${fmt(s.avg_recency)} วันก่อน`; } },
+        yAxis: { type: "category", data: segs.map(s => s.label), inverse: true, axisLabel: { color: C.fg, fontSize: NARROW() ? 11.5 : 13, fontFamily: C.font }, axisLine, axisTick: { show: false } },
+        xAxis: { type: "value", axisLabel: { ...ax, formatter: v => "R$" + v }, splitLine: split, splitNumber: NARROW() ? 3 : 5 },
+        series: [{ type: "bar", barCategoryGap: "42%", animationDelay: i => i * 70, data: segs.map(s => ({ value: s.avg_ltv, itemStyle: { color: rep(s.key) ? C.orange : C.dim, borderRadius: [0, 6, 6, 0] } })),
+          label: lab({ position: "right", formatter: x => "R$" + fmt(x.value) }) }] };
+    },
+    pareto(d, mode) {
+      const pts = d.pareto.curve.map((v, i) => [i * 2, v]), top = d.pareto.top10_rev_pct;
+      return { ...A, grid: { left: 46, right: 24, top: 34, bottom: 46 },
+        tooltip: { ...tip, trigger: "axis", formatter: ps => { const p = ps.find(x => x.seriesIndex === 1) || ps[0]; return `<b>ลูกค้า top ${p.value[0]}%</b><br>ทำรายได้ ${fmt(p.value[1], 1)}% ของทั้งหมด`; } },
+        xAxis: { type: "value", min: 0, max: 100, interval: 20, axisLabel: { ...ax, formatter: v => v + "%" }, axisLine, splitLine: { show: false }, ...xName("% ลูกค้า (เรียงจากใช้จ่ายมากไปน้อย)") },
+        yAxis: { type: "value", min: 0, max: 100, interval: 25, axisLabel: { ...ax, formatter: v => v + "%" }, splitLine: split },
+        series: [
+          { type: "line", data: [[0, 0], [100, 100]], showSymbol: false, lineStyle: { color: C.mute, type: [5, 5], width: 1.5 }, silent: true, z: 1,
+            markPoint: { symbol: "rect", symbolSize: 0, label: { show: true, color: C.fg3, fontSize: 11.5, fontFamily: C.font, formatter: "เส้นที่ทุกคนจ่ายเท่ากัน" }, data: [{ coord: [72, 64] }] } },
+          { type: "line", data: pts, showSymbol: false, smooth: .2, lineStyle: { width: 3, color: C.orange }, z: 2, areaStyle: { color: grad("235,104,52", .18) },
+            markPoint: { symbol: "circle", symbolSize: 14, itemStyle: { color: "#fff", borderColor: C.orange, borderWidth: 3 },
+              label: { show: true, position: mode === "top" ? "right" : "top", distance: 10, color: C.fg, fontSize: 13, fontWeight: 600, fontFamily: C.font, formatter: `top 10% → ${fmt(top, 0)}%` }, data: [{ coord: [10, top] }] } },
+        ] };
+    },
+    delay(d, mode) {
+      const bd = d.q3.by_delay, lateOnly = mode === "late";
+      return { ...A, grid: { left: 40, right: 12, top: 34, bottom: 56 },
+        tooltip: { ...tip, trigger: "item", formatter: x => { const r = bd[x.dataIndex]; return `<b>${r.label}</b><br>รีวิวเฉลี่ย ${fmt(r.avg_review, 2)}★<br>ได้ 1–2 ดาว ${fmt(r.low_review_pct, 1)}%<br>${fmt(r.orders)} ออเดอร์`; } },
+        xAxis: { type: "category", data: bd.map(r => r.label.replace(" ", "\n")), axisLabel: { color: C.fg2, fontSize: NARROW() ? 10 : 11.5, interval: 0, lineHeight: 15, fontFamily: C.font }, axisLine, axisTick: { show: false } },
+        yAxis: { type: "value", min: 0, max: 5, interval: 1, axisLabel: { ...ax, formatter: v => v + "★" }, splitLine: split },
+        series: [{ type: "bar", barCategoryGap: "34%", animationDelay: i => i * 90,
+          data: bd.map((r, i) => ({ value: r.avg_review, itemStyle: { color: i >= 3 ? C.orange : (lateOnly ? C.dim : C.blue), borderRadius: [7, 7, 0, 0] } })),
+          label: lab({ position: "top", fontSize: 13, formatter: x => fmt(x.value, 2) }) }] };
+    },
+    scatter() {
+      const rows = D.state_table, maxC = Math.max(...rows.map(r => r.customers));
+      const show = new Set([...rows].sort((a, b) => b.customers - a.customers).slice(0, 4).map(x => x.state)
+        .concat([...rows].sort((a, b) => b.late_pct - a.late_pct).slice(0, 3).map(x => x.state)).concat([cur]));
+      return { ...A, grid: { left: 50, right: 30, top: 30, bottom: 48 },
+        tooltip: { ...tip, trigger: "item", formatter: x => { const s = rows[x.dataIndex]; return `<b>${s.state} · ${ST[s.state] || ""}</b><br>ส่งช้า ${fmt(s.late_pct, 1)}% · รีวิว ${fmt(s.avg_review, 2)}★<br>ลูกค้า ${fmt(s.customers)} คน · ซื้อซ้ำ ${fmt(s.repeat_rate, 1)}%<br><span style="color:${C.fg2}">คลิกเพื่อกรองรัฐนี้</span>`; } },
+        xAxis: { type: "value", min: 0, axisLabel: { ...ax, formatter: v => v + "%" }, axisLine, splitLine: split, ...xName("% ออเดอร์ที่ส่งช้า") },
+        yAxis: { type: "value", min: v => Math.floor(v.min * 10) / 10 - .05, max: v => Math.ceil(v.max * 10) / 10 + .05, axisLabel: { ...ax, formatter: v => v.toFixed(1) + "★" }, splitLine: split },
+        series: [{ type: "scatter", cursor: "pointer", animationDelay: i => i * 25, emphasis: { scale: 1.25 },
+          data: rows.map(s => ({ value: [s.late_pct, s.avg_review], name: s.state, symbolSize: 8 + 34 * Math.sqrt(s.customers / maxC),
+            itemStyle: { color: s.state === cur ? C.orange : "rgba(42,120,214,.55)", borderColor: "#fff", borderWidth: 2 },
+            label: { show: show.has(s.state), position: "right", color: C.fg, fontSize: 11.5, fontWeight: 600, fontFamily: C.font, formatter: s.state } })) }] };
+    },
+    revRepeat(d) {
+      const br = d.q3.by_review;
+      return { ...A, grid: { left: 44, right: 12, top: 34, bottom: 46 },
+        tooltip: { ...tip, trigger: "item", formatter: x => { const r = br[x.dataIndex]; return `<b>รีวิวแรก ${r.score} ดาว</b><br>กลับมาภายใน 180 วัน ${fmt(r.repeat_pct, 2)}%<br>n = ${fmt(r.n)} คน`; } },
+        xAxis: { type: "category", data: br.map(r => r.score + "★"), axisLabel: { color: C.fg, fontSize: 13, fontFamily: C.font }, axisLine, axisTick: { show: false }, ...xName("คะแนนรีวิวออเดอร์แรก") },
+        yAxis: { type: "value", min: 0, axisLabel: { ...ax, formatter: v => v + "%" }, splitLine: split },
+        series: [{ type: "bar", barCategoryGap: "38%", animationDelay: i => i * 90, data: br.map(r => r.repeat_pct), itemStyle: { color: C.blue, borderRadius: [7, 7, 0, 0] }, label: lab({ position: "top", formatter: x => fmt(x.value, 1) + "%" }) }] };
+    },
+  };
+
+  // correlation across states: late% vs avg review (shown in Q3 copy)
+  const corr = (() => { const r = D.state_table, xs = r.map(x => x.late_pct), ys = r.map(x => x.avg_review);
+    const mx = xs.reduce((a, b) => a + b) / xs.length, my = ys.reduce((a, b) => a + b) / ys.length;
+    return xs.reduce((a, x, i) => a + (x - mx) * (ys[i] - my), 0) / Math.sqrt(xs.reduce((a, x) => a + (x - mx) ** 2, 0) * ys.reduce((a, y) => a + (y - my) ** 2, 0)); })();
+
+  // ================= stage scripts: each step = layer + camera [scale, focusX%, focusY%] + chart mode + copy
+  const SCRIPTS = {
+    q1: { title: "Q1", layers: ["hist", "cdf"], steps: d => { const g = d.gap; return [
+      { layer: "hist", mode: "all", cam: [1, 50, 50], n: fmt(g.n), c: "b", h: "คนที่กลับมาซื้อครั้งที่ 2", p: "แต่ละแท่งคือจำนวนลูกค้าที่กลับมาซื้อซ้ำ แยกตามจำนวนวันนับจากการซื้อครั้งแรก ช่วงละ 15 วัน", cap: `ลูกค้าซื้อซ้ำ <b>${fmt(g.n)}</b> คน จาก ${fmt(d.kpi.customers)} คน` },
+      { layer: "hist", mode: "early", cam: [1.7, 8, 30], n: fmt(g.within_30, 0) + "%", c: "o", h: "กลับมาภายใน 30 วันแรก", p: "สองแท่งแรกสูงกว่าแท่งอื่นชัดเจน เดือนแรกหลังซื้อคือช่วงที่ลูกค้ากลับมาหนาแน่นที่สุด", cap: `<b>${fmt(g.within_30, 0)}%</b> กลับมาในเดือนแรก` },
+      { layer: "cdf", mode: "p50", cam: [1.35, 22, 46], n: fmt(g.p50) + " วัน", c: "b", h: "ครึ่งหนึ่งกลับมาภายในช่วงนี้", p: `เปลี่ยนมาดูแบบสะสม เส้นแตะ 50% ที่วันที่ ${fmt(g.p50)} โปรโมชันที่ส่งหลังจุดนี้พลาดคนที่ตั้งใจจะกลับมาไปแล้วครึ่งหนึ่ง`, cap: `มัธยฐาน <b>${fmt(g.p50)} วัน</b>` },
+      { layer: "cdf", mode: "tail", cam: [1, 50, 50], n: "25%", c: "o", h: `ที่เหลือหลังวันที่ ${fmt(g.p75)}`, p: "หลังจากนี้เส้นค่อย ๆ แบนลง ลูกค้าที่หายไปนานกว่านี้แทบไม่กลับมาเอง ต้องใช้แคมเปญ win-back แยกต่างหาก", cap: `หลังวันที่ <b>${fmt(g.p75)}</b> ต้อง win-back` },
+    ]; } },
+    trend: { title: "TREND", layers: ["volume", "late", "review"], steps: d => { const m = d.monthly;
+      const tN = m.new.reduce((a, c) => a + c, 0), tR = m.returning.reduce((a, c) => a + c, 0);
+      const mx = m.late_pct.reduce((b, v, i) => v != null && v > (m.late_pct[b] ?? -1) ? i : b, 0);
+      const mn = m.avg_review.reduce((b, v, i) => v != null && v < (m.avg_review[b] ?? 9) ? i : b, 0);
+      return [
+      { layer: "volume", mode: "all", cam: [1, 50, 50], n: fmt(tN + tR), c: "b", h: "การซื้อตลอด 20 เดือน", p: "ยอดโตจากหลักร้อยต่อเดือนต้นปี 2017 ขึ้นไปเกิน 6,000 ต่อเดือนในปี 2018 และพุ่งชัดที่ Black Friday พ.ย. 2017", cap: "ยอดซื้อโตต่อเนื่องเกือบทุกเดือน" },
+      { layer: "volume", mode: "returning", cam: [1.8, 80, 30], n: fmt(100 * tR / (tN + tR || 1), 1) + "%", c: "o", h: "ของการซื้อมาจากลูกค้าเก่า", p: "ซูมดูส่วนสีส้มบนยอดแท่ง นั่นคือการซื้อซ้ำทั้งหมด การเติบโตแทบทั้งหมดมาจากการหาลูกค้าใหม่", cap: `ซื้อซ้ำแค่ <b>${fmt(tR)}</b> ครั้ง` },
+      { layer: "late", cam: [1, 50, 50], n: fmt(m.late_pct[mx], 1) + "%", c: "o", h: `ส่งช้าใน ${monthLbl(m.months[mx])}`, p: "ปกติส่งช้าราว 3–6% แต่พุ่งขึ้นสองช่วง คือหลัง Black Friday พ.ย. 2017 และช่วง ก.พ.–มี.ค. 2018", cap: `ส่งช้าพุ่ง <b>${fmt(m.late_pct[mx], 1)}%</b>` },
+      { layer: "review", mode: "mark", cam: [1.3, 70, 55], n: fmt(m.avg_review[mn], 2) + "★", c: "b", h: `รีวิวต่ำสุดใน ${monthLbl(m.months[mn])}`, p: "เส้นรีวิวตกลงในเดือนเดียวกับที่ส่งช้าพุ่งทุกครั้ง แล้วกลับขึ้นมาเมื่อการส่งของกลับมาตรงเวลา", cap: "ส่งช้าเมื่อไหร่ <b>รีวิวตกทันที</b>" },
+    ]; } },
+    q2: { title: "Q2", layers: ["seg", "ltv", "pareto"], steps: d => { const segs = d.segments, p = d.pareto;
+      const sleepy = segs.filter(s => ["about_sleep", "hibernating", "lost"].includes(s.key)).reduce((a, s) => a + s.cust_pct, 0);
+      return [
+      { layer: "seg", cam: [1, 50, 50], n: fmt(sleepy, 0) + "%", c: "o", h: "ซื้อครั้งเดียวแล้วเงียบเกิน 90 วัน", p: "Hibernating กับ Lost คือกลุ่มใหญ่ที่สุด ส่วน Champions ที่ซื้อซ้ำและยังแอคทีฟมีแค่ราว 1%", cap: `<b>${fmt(sleepy, 0)}%</b> ของลูกค้ากำลังหลับ` },
+      { layer: "ltv", cam: [1.3, 45, 20], n: fmt(p.ltv_repeat / p.ltv_single, 1) + "×", c: "o", h: "LTV ของคนที่ซื้อซ้ำ", p: `คนที่ซื้อซ้ำใช้จ่ายสะสมเฉลี่ย R$${fmt(p.ltv_repeat)} เทียบ R$${fmt(p.ltv_single)} ของคนซื้อครั้งเดียว ดึงให้กลับมาได้หนึ่งคนคุ้มพอ ๆ กับหาลูกค้าใหม่สองคน`, cap: `R$<b>${fmt(p.ltv_repeat)}</b> vs R$${fmt(p.ltv_single)}` },
+      { layer: "pareto", mode: "all", cam: [1, 50, 50], n: fmt(p.top10_rev_pct, 0) + "%", c: "b", h: "รายได้จากลูกค้า top 10%", p: "เส้นส้มคือรายได้สะสมเมื่อเรียงลูกค้าจากใช้จ่ายมากไปน้อย ยิ่งโก่งเหนือเส้นประมาก รายได้ยิ่งกระจุกตัวอยู่กับคนกลุ่มเล็ก", cap: `top 10% ทำรายได้ <b>${fmt(p.top10_rev_pct, 0)}%</b>` },
+      { layer: "pareto", mode: "top", cam: [1.8, 12, 34], n: "VIP", c: "o", h: "กลุ่มที่ควรดูแลพิเศษ", p: "ซูมดูช่วงต้นเส้น ลูกค้า 10% แรกคือกลุ่มที่ควรได้สิทธิพิเศษและการดูแลเฉพาะ แม้ส่วนใหญ่ยังซื้อแค่ครั้งเดียว", cap: "โฟกัส <b>top 10%</b> ด้วย VIP tier" },
+    ]; } },
+    q3: { title: "Q3", layers: ["delay", "scatter", "revRepeat"], steps: d => { const bd = d.q3.by_delay, br = d.q3.by_review; return [
+      { layer: "delay", mode: "all", cam: [1, 50, 50], n: fmt(bd[0].avg_review, 1) + "★", c: "b", h: "เมื่อส่งก่อนกำหนด", p: "ออเดอร์ส่วนใหญ่ถึงก่อนวันที่สัญญาไว้ และได้รีวิวเฉลี่ยเกิน 4 ดาว", cap: `ส่งก่อนกำหนด รีวิว <b>${fmt(bd[0].avg_review, 1)}★</b>` },
+      { layer: "delay", mode: "late", cam: [1.5, 86, 96], n: fmt(bd[4].low_review_pct, 0) + "%", c: "o", h: "ได้ 1–2 ดาวเมื่อส่งช้า 8+ วัน", p: `ซูมเข้าสองแท่งสีส้ม แค่ช้า 1–7 วันรีวิวก็ร่วงเหลือ ${fmt(bd[3].avg_review, 1)} ดาว ถ้าช้าเกิน 8 วันเหลือ ${fmt(bd[4].avg_review, 1)} ดาว`, cap: `ช้า 8+ วัน → <b>${fmt(bd[4].avg_review, 1)}★</b>` },
+      { layer: "scatter", cam: [1, 50, 50], n: "r = " + fmt(corr, 2), c: "o", h: "เป็นแบบนี้ทุกรัฐ", p: "แต่ละวงคือหนึ่งรัฐ (ใหญ่ = ลูกค้าเยอะ) รัฐที่ส่งช้าบ่อยอย่าง AL และ MA ได้รีวิวต่ำกว่าเพื่อน คลิกวงไหนก็ได้เพื่อกรองทั้งหน้าเป็นรัฐนั้น", cap: "รัฐที่ส่งช้าบ่อย <b>รีวิวต่ำกว่า</b>" },
+      { layer: "revRepeat", cam: [1, 50, 50], n: fmt(br[0].repeat_pct, 1) + "% vs " + fmt(br[4].repeat_pct, 1) + "%", c: "b", h: "รีวิวอย่างเดียวทำนายการกลับมาได้ไม่ดี", p: "คนที่ให้ 1 ดาวกับ 5 ดาวกลับมาซื้อในอัตราใกล้กัน เพราะอัตราซื้อซ้ำต่ำมากทุกกลุ่ม สัญญาณที่ควรใช้จึงเป็นการส่งช้าที่รู้ล่วงหน้าได้ ไม่ใช่การรอดูรีวิว", cap: "แก้ที่ <b>การส่งช้า</b> ก่อนรีวิวจะมา" },
+    ]; } },
+  };
+
+  // ================= stage engine
+  const stages = [];
+  let stepIO = null;
+  const stacked = () => innerWidth < 1024 && !(innerWidth > innerHeight && innerHeight <= 560);
+  function makeStepIO() {
+    if (!HAS_IO) return;
+    if (stepIO) stepIO.disconnect();
+    const vh = innerHeight;
+    let line = vh * .5;
+    if (stacked()) {   // trigger just below the docked chart so the active card is the one you are reading
+      const dock = document.querySelector(".dock");
+      const dockBottom = navH() + (dock ? dock.offsetHeight : vh * .45);
+      line = Math.min(vh - 60, dockBottom + (vh - dockBottom) * .4);
+    }
+    stepIO = new IntersectionObserver(ents => ents.forEach(en => {
+      if (!en.isIntersecting) return;
+      const st = stages.find(x => x.host.contains(en.target));
+      if (st) go(st, +en.target.dataset.i);
+    }), { rootMargin: `-${Math.round(line)}px 0px -${Math.max(0, Math.round(vh - line - 2))}px 0px` });
+    document.querySelectorAll(".step").forEach(el => stepIO.observe(el));
+  }
+  const navH = () => document.querySelector(".bar").offsetHeight;
+  const setNav = () => document.documentElement.style.setProperty("--nav", navH() + "px");
+  setNav();
+
+  document.querySelectorAll("[data-stage]").forEach(host => {
+    const key = host.dataset.stage, S = SCRIPTS[key];
+    host.innerHTML = `<div class="dock"><div class="frame fx zoom"><div class="hud"><span class="tag">${S.title} · <span class="cnt">1/4</span></span><span class="prog">${"<i></i>".repeat(4)}</span></div>
+      <div class="lens"><div class="camera">${S.layers.map(l => `<div class="layer" data-l="${l}"><div class="chart" role="img" aria-label="${l}"></div></div>`).join("")}</div><div class="flash"></div></div>
+      <div class="lower" aria-live="polite"></div></div></div><div class="steps"></div>`;
+    const st = { key, S, host, idx: -1, charts: {}, frame: host.querySelector(".frame"), cam: host.querySelector(".camera"), lower: host.querySelector(".lower"), flash: host.querySelector(".flash") };
+    host.querySelectorAll(".layer").forEach(L => st.charts[L.dataset.l] = echarts.init(L.querySelector(".chart"), null, { renderer: "svg" }));
+    if (st.charts.scatter) st.charts.scatter.on("click", p => p.name && setState(p.name));
+    st.frame._onIn = () => { if (st.idx >= 0) go(st, st.idx, true); };  // stage re-entered (either direction): replay current shot
+    stages.push(st);
+    watch(st.frame);
+  });
+
+  function buildSteps(st) {
+    st.steps = st.S.steps(data());
+    const box = st.host.querySelector(".steps");
+    box.innerHTML = st.steps.map((s, i) => `<div class="step" data-i="${i}"><div class="n ${s.c}">${s.n}</div><h3>${s.h}</h3><p>${s.p}</p></div>`).join("");
+    if (stepIO) box.querySelectorAll(".step").forEach(el => stepIO.observe(el));
+  }
+
+  function go(st, i, force) {
+    if (i === st.idx && !force) return;
+    const prev = st.idx >= 0 ? st.steps[st.idx] : null, s = st.steps[i];
+    const cut = force || !prev || prev.layer !== s.layer;
+    st.idx = i;
+    st.host.querySelectorAll(".step").forEach(el => el.classList.toggle("on", +el.dataset.i === i));
+    st.host.querySelector(".cnt").textContent = `${i + 1}/${st.steps.length}`;
+    st.host.querySelectorAll(".prog i").forEach((el, k) => el.classList.toggle("on", k === i));
+    st.host.querySelectorAll(".layer").forEach(L => {
+      const on = L.dataset.l === s.layer;
+      if (!on && L.classList.contains("on")) { L.classList.remove("on"); L.classList.add("out"); setTimeout(() => L.classList.remove("out"), 900); }
+      if (on) L.classList.add("on");
+    });
+    const c = st.charts[s.layer], opt = B[s.layer](data(), s.mode);
+    if (cut && !RM) { c.clear(); c.setOption(opt, true); st.flash.classList.remove("go"); void st.flash.offsetWidth; st.flash.classList.add("go"); }
+    else c.setOption(opt, true);
+    const damp = innerWidth < 700 ? .6 : innerWidth < 1024 ? .8 : 1;
+    if (!RM) { st.cam.style.setProperty("--cs", (1 + (s.cam[0] - 1) * damp).toFixed(3)); st.cam.style.setProperty("--ox", s.cam[1] + "%"); st.cam.style.setProperty("--oy", s.cam[2] + "%"); }
+    st.lower.classList.add("swap");
+    clearTimeout(st._lt); st._lt = setTimeout(() => { st.lower.innerHTML = s.cap; st.lower.classList.remove("swap"); }, RM ? 0 : 260);
+    const nEl = st.host.querySelector(`.step[data-i="${i}"] .n`);
+    const m = /^([^0-9]*)([\d,.]+)([^0-9]*)$/.exec(s.n);
+    if (nEl && m) { nEl.dataset.to = m[2].replace(/,/g, ""); nEl.dataset.dec = (m[2].split(".")[1] || "").length; nEl.dataset.pre = m[1]; nEl.dataset.suf = m[3]; countUp(nEl); }
+  }
+
+  // ================= render for current filter
+  function renderAll() {
+    const d = data(), k = d.kpi, g = d.gap, p = d.pareto, bd = d.q3.by_delay;
+    const label = cur === "all" ? "ทั้งประเทศ" : `${cur} · ${ST[cur] || ""}`;
+    document.querySelectorAll(".pill").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.s === cur)));
+    $("state").value = cur;
+    $("scopeEyebrow").textContent = `${label} · ${D.meta.period}`;
+
+    $("heroStat").textContent = fmt(k.repeat_rate, 1) + "%";
+    dotN = Math.max(k.repeaters ? 1 : 0, Math.round(k.repeat_rate * 10)); dotT0 = performance.now();
+    $("dotNote").textContent = `1 จุด ≈ ${fmt(k.customers / 1000, k.customers < 10000 ? 1 : 0)} คน`;
+    if (RM) drawDots(performance.now());
+
+    const specs = [
+      [k.customers, 0, "", "", "ลูกค้า", `${fmt(k.orders)} ออเดอร์`],
+      [k.revenue / 1e6, 2, "R$", "M", "รายได้รวม", `เฉลี่ย R$${fmt(k.aov, 0)} ต่อออเดอร์`],
+      [k.repeat_rate, 1, "", "%", "กลับมาซื้อซ้ำ", `${fmt(k.repeaters)} คน`, true],
+      [k.median_gap, 0, "", " วัน", "มัธยฐานถึงครั้งที่ 2", "เฉพาะคนที่ซื้อซ้ำ"],
+      [k.avg_review, 2, "", "★", "รีวิวเฉลี่ย", "เต็ม 5 ดาว"],
+      [k.late_pct, 1, "", "%", "ส่งช้ากว่ากำหนด", "ของออเดอร์ที่ส่งแล้ว"],
+    ];
+    $("specs").innerHTML = specs.map((s, i) => `<div class="spec fx d${i % 3 + 1}${s[6] ? " hot" : ""}"><span class="v" ${cu(s[0], s[1], s[2], s[3])}>${s[0] == null ? "–" : s[2] + fmt(s[0], s[1]) + s[3]}</span><span class="k">${s[4]}</span><span class="s">${s[5]}</span></div>`).join("");
+    $("specs").querySelectorAll(".spec").forEach(watch);
+
+    $("trio").innerHTML = [
+      [p.top10_rev_pct, 0, "", "%", "รายได้จากลูกค้า top 10%", "เรียงตามยอดใช้จ่ายสะสม"],
+      [p.ltv_repeat / p.ltv_single, 1, "", "×", "LTV คนซื้อซ้ำเทียบคนซื้อครั้งเดียว", `R$${fmt(p.ltv_repeat)} vs R$${fmt(p.ltv_single)}`],
+      [p.repeat_rev_pct, 1, "", "%", "รายได้ที่มาจากคนซื้อซ้ำ", "ยังมีที่ให้โตอีกมาก"],
+    ].map((s, i) => `<div class="spec fx d${i + 1}"><span class="v" ${cu(s[0], s[1], s[2], s[3])}>${s[2] + fmt(s[0], s[1]) + s[3]}</span><span class="k">${s[4]}</span><span class="s">${s[5]}</span></div>`).join("");
+    $("trio").querySelectorAll(".spec").forEach(watch);
+
+    $("starLate").textContent = fmt(bd[4].avg_review, 1) + "★";
+    $("starEarly").textContent = fmt(bd[0].avg_review, 1) + "★";
+
+    stages.forEach(st => { const keep = Math.max(0, st.idx); buildSteps(st); st.idx = -1; go(st, keep, true); });
+
+    const plays = [
+      ["วัน 0–14", "Second‑purchase offer", `${fmt(g.within_30, 0)}% ของคนที่จะกลับมา กลับมาในเดือนแรก ส่งคูปองซื้อครั้งที่ 2 ทันทีหลังได้รับของ`],
+      [`ก่อนวันที่ ${fmt(g.p50)}`, "Automated reminder", `ครึ่งหนึ่งกลับมาภายใน ${fmt(g.p50)} วัน ตั้ง trigger แนะนำสินค้าและส่วนลดก่อนถึงจุดนี้ ไม่ใช่รอ 3–6 เดือน`],
+      ["ทันทีที่รู้ว่าจะช้า", "Service recovery", `ส่งช้า 8+ วันได้ 1–2 ดาว ${fmt(bd[4].low_review_pct, 0)}% แจ้งลูกค้าก่อนพร้อมคูปองชดเชย ก่อนที่ลูกค้าจะเขียนรีวิว`],
+    ];
+    $("plays").innerHTML = plays.map(([w, h, t], i) => `<div class="play fx d${i + 1}"><span class="when">${w}</span><h3>${h}</h3><p>${t}</p></div>`).join("");
+    $("plays").querySelectorAll(".play").forEach(watch);
+    drawTimeline();
+    $("segTbl").innerHTML = segTable(d);
+    onScroll();
+  }
+  function drawTimeline() {
+    const g = data().gap;
+    const Wd = Math.max(300, Math.round($("tlWrap").clientWidth || 1000)), small = Wd < 560;
+    $("tl").setAttribute("viewBox", `0 0 ${Wd} 70`);
+    const X = v => 16 + (Math.min(v ?? 0, 360) / 360) * (Wd - 32);
+    const ticks = [[0, small ? "วัน 0" : "ซื้อครั้งแรก"], [14, small ? "" : "14d"], [g.p50, small ? `${fmt(g.p50)}d` : `P50 · ${fmt(g.p50)}d`], [g.p75, small ? `${fmt(g.p75)}d` : `P75 · ${fmt(g.p75)}d`], [360, "360d"]].filter(t => t[0] != null);
+    $("tl").innerHTML = `<line x1="16" y1="22" x2="${Wd - 16}" y2="22" stroke="${C.grid}" stroke-width="4" stroke-linecap="round"/>
+      <path class="draw" d="M${X(0)} 22 H${X(g.p50)}" stroke="${C.blue}" stroke-width="4" stroke-linecap="round" fill="none" pathLength="1000"/>
+      <path class="draw" d="M${X(0)} 22 H${X(14)}" stroke="${C.orange}" stroke-width="7" stroke-linecap="round" fill="none" pathLength="1000"/>` +
+      ticks.map(([v, t], i) => `<circle class="pop" cx="${X(v)}" cy="22" r="7" fill="#fff" stroke="${C.fg}" stroke-width="3" style="transition-delay:${.2 + i * .18}s"/><text x="${X(v)}" y="56" fill="${C.fg2}" font-size="${small ? 12 : 14}" font-weight="600" font-family="${C.font}" text-anchor="${i === 0 ? "start" : i === ticks.length - 1 ? "end" : "middle"}" style="transition-delay:${.3 + i * .18}s">${t}</text>`).join("");
+
+  }
+  function segTable(d) {
+    return `<thead><tr><th>กลุ่ม RFM</th><th>เกณฑ์</th><th class="r">ลูกค้า</th><th class="r">% ลูกค้า</th><th class="r">% รายได้</th><th class="r">LTV</th><th class="r">Recency (วัน)</th></tr></thead><tbody>` +
+      d.segments.map(s => `<tr><td>${s.label}</td><td>${s.rule}</td><td class="r">${fmt(s.customers)}</td><td class="r">${fmt(s.cust_pct, 1)}%</td><td class="r">${fmt(s.rev_pct, 1)}%</td><td class="r">R$${fmt(s.avg_ltv, 0)}</td><td class="r">${fmt(s.avg_recency)}</td></tr>`).join("") + "</tbody>";
+  }
+
+  // ================= static notes
+  const c = D.meta.cleaning;
+  $("notes").innerHTML = `
+    <div><b>แหล่งข้อมูล</b><ul>
+      <li>${D.meta.source} (Kaggle: olistbr/brazilian-ecommerce)</li>
+      <li>ใช้ 4 ตาราง: orders, customers, order_payments, order_reviews</li>
+      <li>ช่วงวิเคราะห์ ${D.meta.period} · วันอ้างอิง Recency ${D.meta.ref_date}</li>
+      <li>นับลูกค้าด้วย customer_unique_id เพราะ customer_id เปลี่ยนทุกออเดอร์</li></ul></div>
+    <div><b>การทำความสะอาด</b><ul>
+      <li>ออเดอร์ตั้งต้น ${fmt(c.orders_raw)} → เหลือ ${fmt(c.orders_clean)} ออเดอร์ / ${fmt(c.customers_clean)} ลูกค้า</li>
+      <li>ตัดสถานะที่ไม่ใช่ delivered ${fmt(c.removed_not_delivered)} · นอกช่วงเวลา ${fmt(c.removed_out_of_range)}</li>
+      <li>รีวิวซ้ำ ${fmt(c.dup_reviews_removed)} รายการ เก็บรีวิวล่าสุด · ไม่มีรีวิว ${fmt(c.missing_review)} ออเดอร์</li>
+      <li>รวมออเดอร์ที่ห่างกัน &lt; 1 วันเป็นการซื้อครั้งเดียว ${fmt(c.split_orders_merged)} ออเดอร์</li>
+      <li>กราฟรีวิวรายเดือนใช้แกน y ไม่เริ่มที่ 0 เพื่อให้เห็นการเปลี่ยนแปลง (กราฟเส้น)</li></ul></div>`;
+  $("stTbl").innerHTML = `<thead><tr><th>รัฐ</th><th class="r">ลูกค้า</th><th class="r">ซื้อซ้ำ</th><th class="r">ส่งช้า</th><th class="r">รีวิวเฉลี่ย</th><th class="r">วันส่ง (มัธยฐาน)</th></tr></thead><tbody>` +
+    D.state_table.map(r => `<tr><td>${r.state} · ${ST[r.state] || ""}</td><td class="r">${fmt(r.customers)}</td><td class="r">${fmt(r.repeat_rate, 1)}%</td><td class="r">${fmt(r.late_pct, 1)}%</td><td class="r">${fmt(r.avg_review, 2)}</td><td class="r">${fmt(r.deliv_days, 1)}</td></tr>`).join("") + "</tbody>";
+  $("foot").innerHTML = `Data: Brazilian E‑Commerce Public Dataset by Olist · CC BY‑NC‑SA 4.0 · R$ = Brazilian Real · 01219482 Data Visualization, Kasetsart University Chalermphrakiat Sakon Nakhon Province Campus`;
+
+  watch($("tlWrap"));
+  document.querySelectorAll(".callout, .callout-cap").forEach(watch);
+  renderAll();
+
+  makeStepIO();
+  let rt, lastW = innerWidth;
+  function relayout() {
+    setNav();
+    stages.forEach(st => { Object.values(st.charts).forEach(ch => ch.resize()); });
+    if (Math.abs(innerWidth - lastW) > 40) { lastW = innerWidth; stages.forEach(st => { if (st.idx >= 0) go(st, st.idx, true); }); }  // re-layout charts for new width class
+    makeStepIO(); drawTimeline(); onScroll();
+  }
+  addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(relayout, 150); });
+  addEventListener("orientationchange", () => { clearTimeout(rt); rt = setTimeout(relayout, 350); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { setNav(); makeStepIO(); });
+})();
+</script>
+</body>
+</html>

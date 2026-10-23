@@ -1,0 +1,467 @@
+<title>Olist Customer Pulse</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="CRM dashboard: repeat-purchase timing, RFM segments and review/delivery impact — Olist Brazilian e-commerce 2017–2018">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: one operational column — filter bar → KPI strip → three question panels (Q1–Q3) → action playbook → data notes */
+:root {
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --line: #dfe3e8;
+  --grid: #e8ebef;
+  --fg: #111418;
+  --fg-2: #4b5560;
+  --fg-3: #6f7883;
+  --s1: #2a78d6;          /* series 1 — blue (first-time / customers) */
+  --s2: #eb6834;          /* series 2 — orange (returning / revenue) */
+  --accent-soft: #e6effb;
+  --good: #0ca30c; --warn: #fab219; --crit: #d03b3b;
+  --font-ui: "IBM Plex Sans Thai", "Noto Sans Thai", "Leelawadee UI", Tahoma, sans-serif;
+  --font-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121416; --surface: #1a1c1f; --line: #2c3036; --grid: #262a2f;
+    --fg: #eef0f2; --fg-2: #b9c0c8; --fg-3: #8d959e;
+    --s1: #3987e5; --s2: #d95926; --accent-soft: #1d2a3a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121416; --surface: #1a1c1f; --line: #2c3036; --grid: #262a2f;
+  --fg: #eef0f2; --fg-2: #b9c0c8; --fg-3: #8d959e;
+  --s1: #3987e5; --s2: #d95926; --accent-soft: #1d2a3a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-ui);
+  font-size: 15px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 48px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+h1, h2, h3 { margin: 0; text-wrap: balance; line-height: 1.3; }
+h1 { font-size: clamp(24px, 3.4vw, 32px); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 20px; font-weight: 600; }
+h3 { font-size: 15px; font-weight: 600; }
+p { margin: 0; }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-3); }
+
+header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; }
+header.top .lede { color: var(--fg-2); max-width: 64ch; margin-top: 6px; }
+
+.filters {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
+}
+.filters label { font-size: 13px; color: var(--fg-2); font-weight: 500; }
+select {
+  font: inherit; font-size: 14px; color: var(--fg); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; min-width: 0; max-width: 100%;
+}
+select:focus-visible, button:focus-visible { outline: 2px solid var(--s1); outline-offset: 2px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  font: inherit; font-size: 13px; padding: 4px 10px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--line); background: transparent; color: var(--fg-2);
+}
+.chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--s1); color: var(--fg); font-weight: 600; }
+.filters .scope { margin-left: auto; font-size: 13px; color: var(--fg-3); }
+
+.kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 1px; background: var(--line);
+  border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.kpi { background: var(--surface); padding: 14px 16px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.kpi .k { font-size: 12.5px; color: var(--fg-2); }
+.kpi .v { font-family: var(--font-num); font-variant-numeric: tabular-nums; font-size: 24px; font-weight: 600; letter-spacing: -0.02em; }
+.kpi .s { font-size: 12px; color: var(--fg-3); }
+.kpi.flag .v { color: var(--fg); }
+.kpi.flag .k::before { content: "▲ "; color: var(--crit); font-size: 10px; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.panel-head { display: flex; flex-direction: column; gap: 4px; }
+.q-tag { font-family: var(--font-num); font-size: 12px; font-weight: 600; color: var(--s1); }
+.finding { font-size: 16px; font-weight: 500; color: var(--fg); max-width: 75ch; }
+.finding b { font-family: var(--font-num); font-weight: 600; }
+.sub { color: var(--fg-2); font-size: 14px; max-width: 75ch; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+.chart { width: 100%; height: 320px; min-width: 0; }
+.chart.tall { height: 360px; }
+.chart-title { font-size: 14px; font-weight: 600; }
+.chart-note { font-size: 12.5px; color: var(--fg-3); }
+.stack { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--fg-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+.timing { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.timing div { border-left: 3px solid var(--s1); padding: 2px 0 2px 10px; }
+.timing .v { font-family: var(--font-num); font-size: 20px; font-weight: 600; }
+.timing .k { font-size: 12.5px; color: var(--fg-2); }
+
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 620px; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { font-size: 12px; font-weight: 600; color: var(--fg-2); background: var(--bg); }
+td.r, th.r { text-align: right; font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+tr:last-child td { border-bottom: 0; }
+.seg-dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: 0; }
+
+.playbook { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.play { border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+.play .when { font-family: var(--font-num); font-size: 13px; font-weight: 600; color: var(--s2); }
+.play p { font-size: 14px; color: var(--fg-2); }
+.play h3 { font-size: 15px; }
+
+details { border-top: 1px solid var(--line); padding-top: 12px; }
+summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+.notes { margin-top: 10px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; font-size: 13.5px; color: var(--fg-2); }
+.notes ul { margin: 6px 0 0; padding-left: 18px; }
+footer { font-size: 12.5px; color: var(--fg-3); }
+footer a { color: var(--s1); }
+
+@media (max-width: 980px) {
+  .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .playbook { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .grid2, .notes { grid-template-columns: minmax(0, 1fr); }
+  .timing { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .filters .scope { margin-left: 0; width: 100%; }
+}
+@media (max-width: 460px) {
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi .v { font-size: 20px; }
+  .chart { height: 280px; }
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">01219482 Data Visualization · Term Project</div>
+      <h1>Olist Customer Pulse</h1>
+      <p class="lede">แดชบอร์ดสำหรับฝ่ายดูแลลูกค้าสัมพันธ์ (CRM) ตอบคำถามว่า <b>ควรส่งโปรโมชันกระตุ้นตอนไหน</b> และลูกค้ากลุ่มไหนกำลังจะหลุด จากข้อมูลการสั่งซื้อจริงของ Olist (บราซิล) ม.ค. 2017 – ส.ค. 2018</p>
+    </div>
+  </header>
+
+  <div class="filters" role="group" aria-label="ตัวกรอง">
+    <label for="state">รัฐของลูกค้า</label>
+    <select id="state"></select>
+    <div class="chips" id="quick" aria-label="รัฐที่มีลูกค้ามากที่สุด"></div>
+    <span class="scope" id="scope"></span>
+  </div>
+
+  <section class="kpis" id="kpis" aria-label="ตัวชี้วัดหลัก"></section>
+
+  <!-- Q1 -->
+  <section class="panel" aria-labelledby="q1h">
+    <div class="panel-head">
+      <span class="q-tag">Q1 · TIMING</span>
+      <h2 id="q1h">ลูกค้ากลับมาซื้อครั้งที่ 2 หลังซื้อครั้งแรกกี่วัน?</h2>
+      <p class="finding" id="q1find"></p>
+    </div>
+    <div class="timing" id="timing"></div>
+    <div class="stack">
+      <div class="chart-title">จำนวนลูกค้าซื้อซ้ำ แยกตามจำนวนวันจากครั้งแรกถึงครั้งที่ 2 (ช่วงละ 15 วัน)</div>
+      <div class="chart tall" id="c_gap" role="img" aria-label="Histogram ของจำนวนวันถึงการซื้อครั้งที่ 2"></div>
+      <p class="chart-note" id="gapnote"></p>
+    </div>
+  </section>
+
+  <!-- Trend -->
+  <section class="panel" aria-labelledby="trh">
+    <div class="panel-head">
+      <span class="q-tag">CONTEXT · TREND</span>
+      <h2 id="trh">ยอดซื้อโตทุกเดือน แต่เกือบทั้งหมดมาจากลูกค้าใหม่</h2>
+      <p class="finding" id="trfind"></p>
+    </div>
+    <div class="legend"><span><i style="background:var(--s1)"></i>ซื้อครั้งแรก (ลูกค้าใหม่)</span><span><i style="background:var(--s2)"></i>กลับมาซื้อซ้ำ</span></div>
+    <div class="chart" id="c_trend" role="img" aria-label="จำนวนครั้งซื้อรายเดือน แยกลูกค้าใหม่และลูกค้าซื้อซ้ำ"></div>
+  </section>
+
+  <!-- Q2 -->
+  <section class="panel" aria-labelledby="q2h">
+    <div class="panel-head">
+      <span class="q-tag">Q2 · RFM SEGMENTS</span>
+      <h2 id="q2h">ลูกค้าแต่ละกลุ่มมีสัดส่วนและสร้างรายได้ต่างกันแค่ไหน?</h2>
+      <p class="finding" id="q2find"></p>
+    </div>
+    <div class="grid2">
+      <div class="stack">
+        <div class="chart-title">% ของลูกค้า เทียบ % ของรายได้ รายกลุ่ม</div>
+        <div class="legend"><span><i style="background:var(--s1)"></i>% ลูกค้า</span><span><i style="background:var(--s2)"></i>% รายได้</span></div>
+        <div class="chart tall" id="c_seg" role="img" aria-label="สัดส่วนลูกค้าและรายได้ตามกลุ่ม RFM"></div>
+      </div>
+      <div class="stack">
+        <div class="chart-title">ยอดใช้จ่ายสะสมเฉลี่ยต่อคน (LTV, R$)</div>
+        <div class="chart tall" id="c_ltv" role="img" aria-label="LTV เฉลี่ยตามกลุ่ม RFM"></div>
+      </div>
+    </div>
+    <div class="tbl-wrap"><table id="segtbl"></table></div>
+  </section>
+
+  <!-- Q3 -->
+  <section class="panel" aria-labelledby="q3h">
+    <div class="panel-head">
+      <span class="q-tag">Q3 · CHURN SIGNALS</span>
+      <h2 id="q3h">ส่งของช้า → รีวิวแย่ → ลูกค้าไม่กลับมา?</h2>
+      <p class="finding" id="q3find"></p>
+    </div>
+    <div class="grid2">
+      <div class="stack">
+        <div class="chart-title">คะแนนรีวิวเฉลี่ย (1–5) ตามเวลาส่งของเทียบวันที่สัญญา</div>
+        <div class="chart" id="c_delay" role="img" aria-label="คะแนนรีวิวเฉลี่ยตามความล่าช้าในการส่ง"></div>
+        <p class="chart-note">คิดจากทุกออเดอร์ที่ได้รับรีวิว</p>
+      </div>
+      <div class="stack">
+        <div class="chart-title">% ที่กลับมาซื้อซ้ำภายใน 180 วัน ตามคะแนนรีวิวครั้งแรก</div>
+        <div class="chart" id="c_rev" role="img" aria-label="อัตราการซื้อซ้ำตามคะแนนรีวิวครั้งแรก"></div>
+        <p class="chart-note" id="revnote"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Playbook -->
+  <section class="panel" aria-labelledby="pbh">
+    <div class="panel-head">
+      <span class="q-tag">SO WHAT · CRM PLAYBOOK</span>
+      <h2 id="pbh">ข้อเสนอสำหรับฝ่าย CRM จากข้อมูลข้างบน</h2>
+    </div>
+    <div class="playbook" id="playbook"></div>
+    <details>
+      <summary>ข้อมูล นิยาม และการทำความสะอาดข้อมูล</summary>
+      <div class="notes" id="notes"></div>
+    </details>
+  </section>
+
+  <footer id="foot"></footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+<script src="data.js"></script>
+<script>
+(function () {
+  const D = window.DASH_DATA;
+  const $ = (id) => document.getElementById(id);
+  const fmt = (n, d = 0) => n == null ? "–" : Number(n).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+  const brl = (n) => n == null ? "–" : "R$" + (n >= 1e6 ? fmt(n / 1e6, 2) + "M" : n >= 1e4 ? fmt(n / 1e3, 0) + "k" : fmt(n, 0));
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const STATE_TH = { SP: "São Paulo", RJ: "Rio de Janeiro", MG: "Minas Gerais", RS: "Rio Grande do Sul", PR: "Paraná", SC: "Santa Catarina", BA: "Bahia", DF: "Distrito Federal", ES: "Espírito Santo", GO: "Goiás", PE: "Pernambuco", CE: "Ceará", PA: "Pará", MT: "Mato Grosso", MA: "Maranhão", MS: "Mato Grosso do Sul", PB: "Paraíba", PI: "Piauí", RN: "Rio Grande do Norte", AL: "Alagoas", SE: "Sergipe", TO: "Tocantins", RO: "Rondônia", AM: "Amazonas", AC: "Acre", AP: "Amapá", RR: "Roraima" };
+
+  // ---------- filter
+  let current = "all";
+  try { const s = localStorage.getItem("olist_state"); if (s && (s === "all" || D.states[s])) current = s; } catch (e) {}
+  const sel = $("state");
+  const sizes = D.meta.state_customers;
+  sel.innerHTML = `<option value="all">ทั้งประเทศ (${fmt(D.all.kpi.customers)} คน)</option>` +
+    Object.keys(sizes).map(s => `<option value="${s}">${s} · ${STATE_TH[s] || s} (${fmt(sizes[s])} คน)</option>`).join("");
+  const quick = ["all", ...Object.keys(sizes).slice(0, 5)];
+  $("quick").innerHTML = quick.map(s => `<button class="chip" type="button" data-s="${s}">${s === "all" ? "ทั้งหมด" : s}</button>`).join("");
+  $("quick").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setState(b.dataset.s); });
+  sel.addEventListener("change", () => setState(sel.value));
+
+  function setState(s) {
+    current = s; sel.value = s;
+    try { localStorage.setItem("olist_state", s); } catch (e) {}
+    render();
+  }
+
+  // ---------- charts
+  const charts = {};
+  function chart(id) {
+    if (!charts[id]) charts[id] = echarts.init($(id), null, { renderer: "svg" });
+    return charts[id];
+  }
+  function base() {
+    const fg2 = css("--fg-2"), fg3 = css("--fg-3"), grid = css("--grid"), line = css("--line"), surface = css("--surface"), fg = css("--fg");
+    return {
+      fg, fg2, fg3, grid, line, surface, s1: css("--s1"), s2: css("--s2"),
+      textStyle: { fontFamily: css("--font-ui"), color: fg2 },
+      tooltip: { backgroundColor: surface, borderColor: line, textStyle: { color: fg, fontSize: 13 }, confine: true, extraCssText: "box-shadow:0 4px 14px rgba(0,0,0,.12);border-radius:8px;" },
+      axisLabel: { color: fg3, fontSize: 11.5, fontFamily: css("--font-num") },
+      splitLine: { lineStyle: { color: grid } },
+      axisLine: { lineStyle: { color: line } },
+    };
+  }
+
+  function render() {
+    const d = current === "all" ? D.all : D.states[current];
+    const label = current === "all" ? "ทั้งประเทศ" : `${current} · ${STATE_TH[current] || ""}`;
+    document.querySelectorAll("#quick .chip").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.s === current)));
+    $("scope").textContent = `กำลังดู: ${label} · ${D.meta.period}`;
+    const k = d.kpi, g = d.gap, p = d.pareto, q3 = d.q3;
+    const small = g.n < 100;
+
+    // KPI
+    const kp = [
+      ["ลูกค้า (unique)", fmt(k.customers), `${fmt(k.orders)} ออเดอร์`],
+      ["รายได้รวม", brl(k.revenue), `เฉลี่ย R$${fmt(k.aov, 0)} / ออเดอร์`],
+      ["ลูกค้าที่กลับมาซื้อซ้ำ", fmt(k.repeat_rate, 1) + "%", `${fmt(k.repeaters)} คน`, true],
+      ["มัธยฐานวันถึงครั้งที่ 2", k.median_gap == null ? "–" : fmt(k.median_gap) + " วัน", "เฉพาะคนที่ซื้อซ้ำ"],
+      ["รีวิวเฉลี่ย", fmt(k.avg_review, 2), "เต็ม 5"],
+      ["ส่งช้ากว่ากำหนด", fmt(k.late_pct, 1) + "%", "ของออเดอร์ที่ส่งแล้ว"],
+    ];
+    $("kpis").innerHTML = kp.map(([a, b, c, f]) => `<div class="kpi${f ? " flag" : ""}"><span class="k">${a}</span><span class="v">${b}</span><span class="s">${c}</span></div>`).join("");
+
+    // ---------- Q1
+    $("q1find").innerHTML = g.n === 0 ? "ไม่มีลูกค้าซื้อซ้ำในรัฐนี้" :
+      `ลูกค้าที่กลับมาซื้อ <b>${fmt(g.within_30, 0)}%</b> กลับมาภายใน 30 วัน และครึ่งหนึ่งกลับมาภายใน <b>${fmt(g.p50)} วัน</b> ` +
+      `ถ้าเลยช่วง ${fmt(g.p75)} วันไปแล้ว โอกาสที่ลูกค้าจะกลับมาเหลือน้อย` + (small ? ` <span class="sub">(ตัวอย่างในรัฐนี้มีแค่ ${g.n} คน ควรอ่านอย่างระวัง)</span>` : "");
+    $("timing").innerHTML = [
+      [fmt(g.within_30, 1) + "%", "กลับมาภายใน 30 วัน"],
+      [fmt(g.p25) + " วัน", "เร็วสุด 25% แรก (P25)"],
+      [fmt(g.p50) + " วัน", "มัธยฐาน (P50)"],
+      [fmt(g.p75) + " วัน", "75% กลับมาภายใน (P75)"],
+    ].map(([v, t]) => `<div><div class="v">${v}</div><div class="k">${t}</div></div>`).join("");
+    $("gapnote").textContent = `n = ${fmt(g.n)} คนที่ซื้อ ≥ 2 ครั้ง · ออเดอร์ที่ห่างกันไม่ถึง 1 วันนับเป็นตะกร้าเดียวกัน · แท่งสุดท้ายรวมทุกคนที่ใช้เวลา ≥ 345 วัน`;
+    {
+      const b = base();
+      const marks = [["P25", g.p25], ["P50", g.p50], ["P75", g.p75]].filter(m => m[1] != null);
+      // Bars are category bins of 15 days; draw percentile guides at fractional bin positions
+      chart("c_gap").setOption({
+        animationDuration: 300,
+        textStyle: b.textStyle,
+        grid: { left: 48, right: 16, top: 28, bottom: 56 },
+        tooltip: { ...b.tooltip, trigger: "axis", axisPointer: { type: "shadow", shadowStyle: { color: "rgba(127,127,127,.08)" } },
+          formatter: (ps) => { const i = ps[0].dataIndex; return `<b>${g.bins[i]} วัน</b><br>${fmt(g.counts[i])} คน · ${fmt(100 * g.counts[i] / g.n, 1)}%<br>สะสม ${fmt(g.cum_pct[i], 1)}%`; } },
+        xAxis: { type: "value", min: 0, max: 360, interval: 30, axisLabel: { ...b.axisLabel, formatter: v => v === 360 ? "360+" : v }, axisLine: b.axisLine, splitLine: { show: false }, name: "วันหลังซื้อครั้งแรก", nameLocation: "middle", nameGap: 32, nameTextStyle: { color: b.fg3, fontSize: 12 } },
+        yAxis: { type: "value", axisLabel: b.axisLabel, splitLine: b.splitLine, name: "คน", nameTextStyle: { color: b.fg3, fontSize: 12, align: "right" } },
+        series: [{
+          type: "custom",
+          renderItem: (params, api) => {
+            const i = api.value(0), x0 = api.coord([i * 15, 0]), x1 = api.coord([i * 15 + 15, api.value(1)]);
+            const w = x1[0] - x0[0] - 2, h = x0[1] - x1[1];
+            return { type: "rect", shape: { x: x0[0] + 1, y: x1[1], width: Math.max(w, 1), height: h, r: [4, 4, 0, 0] }, style: { fill: b.s1 } };
+          },
+          encode: { x: 0, y: 1 },
+          data: g.counts.map((c, i) => [i, c]),
+          markLine: { silent: true, symbol: "none", label: { color: b.fg2, fontFamily: css("--font-num"), fontSize: 11.5, formatter: (m) => `${m.name} ${m.value}d` },
+            lineStyle: { color: b.fg2, type: [4, 3], width: 1 }, data: marks.map(([n, v]) => ({ name: n, xAxis: Math.min(v, 359) })) },
+        }],
+      }, true);
+    }
+
+    // ---------- trend
+    {
+      const b = base(), m = d.monthly;
+      const totN = m.new.reduce((a, c) => a + c, 0), totR = m.returning.reduce((a, c) => a + c, 0);
+      $("trfind").innerHTML = `ตลอด 20 เดือน มีการซื้อทั้งหมด <b>${fmt(totN + totR)}</b> ครั้ง เป็นการซื้อซ้ำเพียง <b>${fmt(100 * totR / (totN + totR), 1)}%</b> รายได้แทบทั้งหมดต้องพึ่งการหาลูกค้าใหม่ทุกเดือน`;
+      const lbl = m.months.map(s => { const [y, mo] = s.split("-"); return ["", "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."][+mo] + " " + y.slice(2); });
+      chart("c_trend").setOption({
+        animationDuration: 300, textStyle: b.textStyle,
+        grid: { left: 56, right: 16, top: 16, bottom: 40 },
+        tooltip: { ...b.tooltip, trigger: "axis", axisPointer: { type: "shadow", shadowStyle: { color: "rgba(127,127,127,.08)" } },
+          formatter: (ps) => { const i = ps[0].dataIndex, t = m.new[i] + m.returning[i]; return `<b>${lbl[i]}</b><br>ลูกค้าใหม่ ${fmt(m.new[i])}<br>ซื้อซ้ำ ${fmt(m.returning[i])} (${fmt(t ? 100 * m.returning[i] / t : 0, 1)}%)<br>รายได้ ${brl(m.revenue[i])}`; } },
+        xAxis: { type: "category", data: lbl, axisLabel: { ...b.axisLabel, interval: "auto" }, axisLine: b.axisLine, axisTick: { show: false } },
+        yAxis: { type: "value", axisLabel: { ...b.axisLabel, formatter: v => v >= 1000 ? v / 1000 + "k" : v }, splitLine: b.splitLine },
+        series: [
+          { name: "ซื้อครั้งแรก", type: "bar", stack: "t", data: m.new, itemStyle: { color: b.s1, borderColor: b.surface, borderWidth: 1 }, barCategoryGap: "28%" },
+          { name: "ซื้อซ้ำ", type: "bar", stack: "t", data: m.returning, itemStyle: { color: b.s2, borderRadius: [4, 4, 0, 0], borderColor: b.surface, borderWidth: 1 } },
+        ],
+      }, true);
+    }
+
+    // ---------- Q2
+    const segs = d.segments;
+    const at = segs.filter(s => ["about_sleep", "hibernating", "lost"].includes(s.key));
+    const atPct = at.reduce((a, s) => a + s.cust_pct, 0);
+    $("q2find").innerHTML = `ลูกค้า <b>${fmt(atPct, 0)}%</b> ซื้อครั้งเดียวแล้วหายไปเกิน 90 วัน ส่วนคนที่ซื้อซ้ำมีแค่ <b>${fmt(k.repeat_rate, 1)}%</b> แต่ใช้จ่ายต่อคนสูงกว่าเกือบ <b>${fmt(p.ltv_repeat / p.ltv_single, 1)} เท่า</b> (R$${fmt(p.ltv_repeat)} เทียบ R$${fmt(p.ltv_single)}) · ลูกค้า top 10% ที่ใช้จ่ายสูงสุดทำรายได้ <b>${fmt(p.top10_rev_pct, 0)}%</b>`;
+    {
+      const b = base(), names = segs.map(s => s.label);
+      chart("c_seg").setOption({
+        animationDuration: 300, textStyle: b.textStyle,
+        grid: { left: 112, right: 44, top: 8, bottom: 28 },
+        tooltip: { ...b.tooltip, trigger: "axis", axisPointer: { type: "shadow", shadowStyle: { color: "rgba(127,127,127,.08)" } },
+          formatter: (ps) => { const s = segs[ps[0].dataIndex]; return `<b>${s.label}</b><br>${s.rule}<br>ลูกค้า ${fmt(s.customers)} คน (${fmt(s.cust_pct, 1)}%)<br>รายได้ ${brl(s.revenue)} (${fmt(s.rev_pct, 1)}%)`; } },
+        yAxis: { type: "category", data: names, inverse: true, axisLabel: { color: b.fg2, fontSize: 12.5 }, axisLine: b.axisLine, axisTick: { show: false } },
+        xAxis: { type: "value", axisLabel: { ...b.axisLabel, formatter: v => v + "%" }, splitLine: b.splitLine },
+        series: [
+          { name: "% ลูกค้า", type: "bar", data: segs.map(s => s.cust_pct), itemStyle: { color: b.s1, borderRadius: [0, 4, 4, 0] }, barGap: "12%", barCategoryGap: "30%",
+            label: { show: true, position: "right", color: b.fg2, fontSize: 11, fontFamily: css("--font-num"), formatter: (x) => fmt(x.value, 1) } },
+          { name: "% รายได้", type: "bar", data: segs.map(s => s.rev_pct), itemStyle: { color: b.s2, borderRadius: [0, 4, 4, 0] },
+            label: { show: true, position: "right", color: b.fg2, fontSize: 11, fontFamily: css("--font-num"), formatter: (x) => fmt(x.value, 1) } },
+        ],
+      }, true);
+      chart("c_ltv").setOption({
+        animationDuration: 300, textStyle: b.textStyle,
+        grid: { left: 112, right: 56, top: 8, bottom: 28 },
+        tooltip: { ...b.tooltip, trigger: "item", formatter: (x) => { const s = segs[x.dataIndex]; return `<b>${s.label}</b><br>LTV เฉลี่ย R$${fmt(s.avg_ltv, 2)}<br>ซื้อล่าสุดเฉลี่ย ${fmt(s.avg_recency)} วันก่อน`; } },
+        yAxis: { type: "category", data: names, inverse: true, axisLabel: { color: b.fg2, fontSize: 12.5 }, axisLine: b.axisLine, axisTick: { show: false } },
+        xAxis: { type: "value", axisLabel: { ...b.axisLabel, formatter: v => "R$" + v }, splitLine: b.splitLine },
+        series: [{ type: "bar", data: segs.map(s => s.avg_ltv), barCategoryGap: "45%",
+          itemStyle: { color: (x) => segs[x.dataIndex].key === "champions" || segs[x.dataIndex].key === "cant_lose" ? b.s2 : b.s1, borderRadius: [0, 4, 4, 0] },
+          label: { show: true, position: "right", color: b.fg2, fontSize: 11, fontFamily: css("--font-num"), formatter: (x) => "R$" + fmt(x.value) } }],
+      }, true);
+    }
+    $("segtbl").innerHTML = `<thead><tr><th>กลุ่ม</th><th>เกณฑ์</th><th class="r">ลูกค้า</th><th class="r">% ลูกค้า</th><th class="r">% รายได้</th><th class="r">LTV เฉลี่ย</th><th class="r">ซื้อล่าสุด (วัน)</th></tr></thead><tbody>` +
+      segs.map(s => `<tr><td><b>${s.label}</b></td><td>${s.rule}</td><td class="r">${fmt(s.customers)}</td><td class="r">${fmt(s.cust_pct, 1)}%</td><td class="r">${fmt(s.rev_pct, 1)}%</td><td class="r">R$${fmt(s.avg_ltv, 0)}</td><td class="r">${fmt(s.avg_recency)}</td></tr>`).join("") + `</tbody>`;
+
+    // ---------- Q3
+    {
+      const b = base(), bd = q3.by_delay, br = q3.by_review;
+      const early = bd[0], late = bd[4];
+      const r1 = br[0].repeat_pct, r5 = br[4].repeat_pct;
+      $("q3find").innerHTML = `ออเดอร์ที่ส่งช้า 8 วันขึ้นไปได้รีวิวเฉลี่ยแค่ <b>${fmt(late.avg_review, 1)}</b> ดาว (ได้ 1–2 ดาวถึง <b>${fmt(late.low_review_pct, 0)}%</b>) เทียบ <b>${fmt(early.avg_review, 1)}</b> ดาวเมื่อส่งก่อนกำหนด ` +
+        `แต่คะแนนรีวิวเองแยกคนที่จะกลับมาซื้อได้ไม่มาก (รีวิว 1 ดาวกลับมา ${fmt(r1, 1)}% เทียบ 5 ดาว ${fmt(r5, 1)}%) เพราะอัตราซื้อซ้ำต่ำมากทุกกลุ่ม`;
+      chart("c_delay").setOption({
+        animationDuration: 300, textStyle: b.textStyle,
+        grid: { left: 40, right: 16, top: 24, bottom: 48 },
+        tooltip: { ...b.tooltip, trigger: "item", formatter: (x) => { const r = bd[x.dataIndex]; return `<b>${r.label}</b><br>รีวิวเฉลี่ย ${fmt(r.avg_review, 2)}<br>ได้ 1–2 ดาว ${fmt(r.low_review_pct, 1)}%<br>${fmt(r.orders)} ออเดอร์`; } },
+        xAxis: { type: "category", data: bd.map(r => r.label.replace(" ", "\n")), axisLabel: { color: b.fg2, fontSize: 11.5, interval: 0 }, axisLine: b.axisLine, axisTick: { show: false } },
+        yAxis: { type: "value", min: 0, max: 5, interval: 1, axisLabel: b.axisLabel, splitLine: b.splitLine },
+        series: [{ type: "bar", barCategoryGap: "38%", data: bd.map(r => r.avg_review),
+          itemStyle: { color: (x) => x.dataIndex >= 3 ? b.s2 : b.s1, borderRadius: [4, 4, 0, 0] },
+          label: { show: true, position: "top", color: b.fg, fontSize: 12, fontFamily: css("--font-num"), formatter: (x) => fmt(x.value, 2) } }],
+      }, true);
+      chart("c_rev").setOption({
+        animationDuration: 300, textStyle: b.textStyle,
+        grid: { left: 44, right: 16, top: 24, bottom: 48 },
+        tooltip: { ...b.tooltip, trigger: "item", formatter: (x) => { const r = br[x.dataIndex]; return `<b>รีวิวครั้งแรก ${r.score} ดาว</b><br>กลับมาซื้อภายใน 180 วัน ${fmt(r.repeat_pct, 2)}%<br>n = ${fmt(r.n)} คน`; } },
+        xAxis: { type: "category", data: br.map(r => r.score + " ดาว"), axisLabel: { color: b.fg2, fontSize: 12 }, axisLine: b.axisLine, axisTick: { show: false }, name: "คะแนนรีวิวออเดอร์แรก", nameLocation: "middle", nameGap: 30, nameTextStyle: { color: b.fg3, fontSize: 12 } },
+        yAxis: { type: "value", min: 0, axisLabel: { ...b.axisLabel, formatter: v => v + "%" }, splitLine: b.splitLine },
+        series: [{ type: "bar", barCategoryGap: "38%", data: br.map(r => r.repeat_pct),
+          itemStyle: { color: b.s1, borderRadius: [4, 4, 0, 0] },
+          label: { show: true, position: "top", color: b.fg, fontSize: 12, fontFamily: css("--font-num"), formatter: (x) => fmt(x.value, 1) + "%" } }],
+      }, true);
+      $("revnote").textContent = `cohort = ลูกค้า ${fmt(q3.cohort_n)} คนที่ซื้อครั้งแรกก่อน 4 มี.ค. 2018 (ทุกคนมีเวลาครบ 180 วัน) · เฉลี่ยรวม ${fmt(q3.overall_repeat_pct, 2)}%`;
+    }
+
+    // ---------- playbook (numbers follow the filter)
+    const plays = [
+      ["ภายใน 14 วันหลังได้รับของ", "ส่ง Second-purchase offer", `ช่วงแรกคือช่วงที่ลูกค้ากลับมาหนาแน่นที่สุด (${fmt(g.within_30, 0)}% ของคนซื้อซ้ำกลับมาภายใน 30 วัน) ส่งคูปองครั้งที่ 2 ทันทีหลังได้รับของ`],
+      [`ก่อนวันที่ ${fmt(g.p50)}`, "Reminder รอบสอง", `ครึ่งหนึ่งของคนที่จะกลับมา กลับมาภายใน ${fmt(g.p50)} วัน ตั้ง automated trigger ส่งแนะนำสินค้า/ส่วนลดก่อนถึงจุดนี้ ไม่ใช่รอถึง 3–6 เดือน`],
+      ["เมื่อส่งของช้า", "Service recovery ทันที", `ออเดอร์ที่ส่งช้า 8+ วัน ได้ 1–2 ดาว ${fmt(d.q3.by_delay[4].low_review_pct, 0)}% ให้ระบบแจ้งทีม CRM ตั้งแต่ตอนรู้ว่าจะช้า พร้อมคูปองชดเชย ก่อนลูกค้าไปให้รีวิว`],
+    ];
+    $("playbook").innerHTML = plays.map(([w, h, t]) => `<div class="play"><span class="when">${w}</span><h3>${h}</h3><p>${t}</p></div>`).join("");
+  }
+
+  // ---------- static notes
+  const c = D.meta.cleaning;
+  $("notes").innerHTML = `
+    <div><b>แหล่งข้อมูล</b><ul>
+      <li>${D.meta.source}</li>
+      <li>ใช้ 4 ตาราง: orders, customers, order_payments, order_reviews เชื่อมด้วย order_id และ customer_id</li>
+      <li>ช่วงวิเคราะห์ ${D.meta.period} (ตัดปี 2016 และ ก.ย.–ต.ค. 2018 ที่ข้อมูลไม่ครบ) · วันอ้างอิง Recency ${D.meta.ref_date}</li>
+      <li>นับลูกค้าด้วย customer_unique_id (customer_id เปลี่ยนทุกออเดอร์)</li></ul></div>
+    <div><b>การทำความสะอาด</b><ul>
+      <li>ออเดอร์ตั้งต้น ${fmt(c.orders_raw)} → เหลือ ${fmt(c.orders_clean)} ออเดอร์ / ${fmt(c.customers_clean)} ลูกค้า</li>
+      <li>ตัดออเดอร์ที่ไม่ได้สถานะ delivered ${fmt(c.removed_not_delivered)} และนอกช่วงเวลา ${fmt(c.removed_out_of_range)}</li>
+      <li>รีวิวซ้ำในออเดอร์เดียว ${fmt(c.dup_reviews_removed)} รายการ เก็บรีวิวล่าสุด · ออเดอร์ไม่มีรีวิว ${fmt(c.missing_review)} ไม่นำมาคิดคะแนน</li>
+      <li>ออเดอร์ของลูกค้าคนเดิมที่ห่างกัน &lt; 1 วัน รวมเป็นการซื้อครั้งเดียว (${fmt(c.split_orders_merged)} ออเดอร์) เพราะเป็นตะกร้าที่ถูกแยกตามผู้ขาย</li></ul></div>`;
+  $("foot").innerHTML = `Data: Olist via Kaggle (CC BY-NC-SA 4.0) · ค่าเงิน R$ = Brazilian Real · Course 01219482 Data Visualization, KU CSC`;
+
+  render();
+
+  // ---------- resize + theme
+  let t; addEventListener("resize", () => { clearTimeout(t); t = setTimeout(() => Object.values(charts).forEach(c => c.resize()), 120); });
+  const rerender = () => render();
+  matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", rerender);
+  new MutationObserver(rerender).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+})();
+</script>
