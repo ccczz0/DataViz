@@ -451,9 +451,13 @@ footer { padding-block: 28px 56px; border-top: 1px solid var(--hair); font-size:
         yAxis: { type: "value", min: 0, max: 100, interval: 25, axisLabel: { ...ax, formatter: v => v + "%" }, splitLine: split },
         series: [{ type: "line", data: pts, showSymbol: false, smooth: .2, lineStyle: { width: 3, color: C.blue }, areaStyle: { color: grad("42,120,214", .22) },
           markPoint: ok ? { symbol: "circle", symbolSize: 14, itemStyle: { color: "#fff", borderColor: tail ? C.fg3 : C.orange, borderWidth: 3 },
-            label: { show: true, position: "top", distance: 10, color: C.fg, fontWeight: 600, fontSize: 13, fontFamily: C.font, formatter: `50% · ${g.p50} วัน` }, data: [{ coord: [g.p50, 50] }] } : undefined,
+            label: { show: true, position: "top", distance: 10, color: C.fg, fontWeight: 600, fontSize: 13, fontFamily: C.font, formatter: p => p.name },
+            data: [{ coord: [g.p50, 50], name: `50% · ${g.p50} วัน` }].concat(tail && g.p75 != null ? [{ coord: [g.p75, 75], name: `75% · ${g.p75} วัน`, itemStyle: { color: "#fff", borderColor: C.orange, borderWidth: 3 }, label: { position: "left", distance: 10 } }] : []) } : undefined,
           markLine: ok ? { silent: true, symbol: "none", lineStyle: { type: [4, 4], color: C.fg3 }, label: { show: false }, data: [[{ coord: [g.p50, 0] }, { coord: [g.p50, 50] }], [{ coord: [0, 50] }, { coord: [g.p50, 50] }]] } : undefined,
-          markArea: tail && g.p75 != null ? { silent: true, itemStyle: { color: "rgba(235,104,52,.10)" }, label: { show: true, position: "insideTop", distance: 12, color: C.orange, fontWeight: 600, fontSize: 13, fontFamily: C.font }, data: [[{ xAxis: g.p75, name: `หลังวันที่ ${g.p75} เหลือ 25%` }, { xAxis: 360 }]] } : undefined }] };
+          // tail: shade the gap between the curve's 75% level and 100% — the quarter of returners still to come
+          markArea: tail && g.p75 != null ? { silent: true, itemStyle: { color: "rgba(235,104,52,.12)", borderColor: C.orange, borderWidth: 1, borderType: [4, 4] },
+            label: { show: true, position: "insideTopLeft", distance: 8, color: C.orange, fontWeight: 600, fontSize: 12.5, lineHeight: 17, fontFamily: C.font },
+            data: [[{ coord: [g.p75, 75], name: `อีก 25% ยังไม่กลับมา\nทยอยมาหลังวันที่ ${g.p75}` }, { coord: [360, 100] }]] } : undefined }] };
     },
     volume(d, mode) {
       const m = d.monthly, lbl = m.months.map(monthLbl), ret = mode === "returning";
@@ -573,7 +577,7 @@ footer { padding-block: 28px 56px; border-top: 1px solid var(--hair); font-size:
       { layer: "hist", mode: "all", cam: [1, 50, 50], n: fmt(g.n), c: "b", h: "คนที่กลับมาซื้อครั้งที่ 2", p: "แต่ละแท่งคือจำนวนลูกค้าที่กลับมาซื้อซ้ำ แยกตามจำนวนวันนับจากการซื้อครั้งแรก ช่วงละ 15 วัน", cap: `ลูกค้าซื้อซ้ำ <b>${fmt(g.n)}</b> คน จาก ${fmt(d.kpi.customers)} คน` },
       { layer: "hist", mode: "early", cam: [1.7, 8, 30], n: fmt(g.within_30, 0) + "%", c: "o", h: "กลับมาภายใน 30 วันแรก", p: "สองแท่งแรกสูงกว่าแท่งอื่นชัดเจน เดือนแรกหลังซื้อคือช่วงที่ลูกค้ากลับมาหนาแน่นที่สุด", cap: `<b>${fmt(g.within_30, 0)}%</b> กลับมาในเดือนแรก` },
       { layer: "cdf", mode: "p50", cam: [1.35, 22, 46], n: fmt(g.p50) + " วัน", c: "b", h: "ครึ่งหนึ่งกลับมาภายในช่วงนี้", p: `เปลี่ยนมาดูแบบสะสม เส้นแตะ 50% ที่วันที่ ${fmt(g.p50)} โปรโมชันที่ส่งหลังจุดนี้พลาดคนที่ตั้งใจจะกลับมาไปแล้วครึ่งหนึ่ง`, cap: `มัธยฐาน <b>${fmt(g.p50)} วัน</b>` },
-      { layer: "cdf", mode: "tail", cam: [1, 50, 50], n: "25%", c: "o", h: `ที่เหลือหลังวันที่ ${fmt(g.p75)}`, p: "หลังจากนี้เส้นค่อย ๆ แบนลง ลูกค้าที่หายไปนานกว่านี้แทบไม่กลับมาเอง ต้องใช้แคมเปญ win-back แยกต่างหาก", cap: `หลังวันที่ <b>${fmt(g.p75)}</b> ต้อง win-back` },
+      { layer: "cdf", mode: "tail", cam: [1, 50, 50], n: "25%", c: "o", h: `กลับมาช้ากว่าวันที่ ${fmt(g.p75)}`, p: `เส้นนี้เป็นยอดสะสม จึงขึ้นอย่างเดียว ความชันคือจำนวนคนที่กลับมาต่อวัน ช่วงแรกชันมาก แต่หลังวันที่ ${fmt(g.p75)} เส้นเกือบแบน อีก 25% ที่เหลือ (ช่องสีส้มถึงเส้น 100%) ทยอยมาทีละน้อยตลอดครึ่งปีถัดไป รอให้กลับมาเองไม่คุ้ม ต้องใช้แคมเปญ win-back`, cap: `อีก <b>25%</b> มาช้ากว่าวันที่ ${fmt(g.p75)}` },
     ]; } },
     trend: { title: "TREND", layers: ["volume", "late", "review"], steps: d => { const m = d.monthly;
       const tN = m.new.reduce((a, c) => a + c, 0), tR = m.returning.reduce((a, c) => a + c, 0);
