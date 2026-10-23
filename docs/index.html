@@ -51,12 +51,14 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
 @supports (overflow: clip) { html { overflow-x: clip; } }
 body {
   margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font);
-  font-size: 17px; line-height: 1.5; letter-spacing: -0.01em;
+  font-size: 17px; line-height: 1.6; letter-spacing: normal;
   -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 40; background: var(--glass); }
-h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; letter-spacing: -0.022em; }
+/* Thai: no negative tracking (WebKit splits vowels/tone marks off their consonant when letter-spacing ≠ 0)
+   and line-heights ≥ 1.3 so stacked marks of two wrapped lines don't collide or get clipped */
+h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; letter-spacing: normal; line-height: 1.35; }
 p { margin: 0; }
 .tnum { font-variant-numeric: tabular-nums; }
 .wrap { max-width: 1180px; margin: 0 auto; }
@@ -64,13 +66,13 @@ p { margin: 0; }
 section { padding-block: clamp(72px, 11vw, 140px); }
 .eyebrow { font-size: 17px; font-weight: 600; color: var(--orange); }
 .eyebrow.b { color: var(--blue); }
-.h-xl { font-size: clamp(40px, 6.4vw, 72px); line-height: 1.1; font-weight: 700; }
-.h-lg { font-size: clamp(32px, 4.8vw, 56px); line-height: 1.12; font-weight: 700; }
-.lead { font-size: clamp(19px, 2vw, 24px); line-height: 1.42; color: var(--fg-2); max-width: 36ch; font-weight: 500; }
+.h-xl { font-size: clamp(36px, 6vw, 68px); line-height: 1.32; font-weight: 700; }
+.h-lg { font-size: clamp(29px, 4.6vw, 52px); line-height: 1.34; font-weight: 700; }
+.lead { font-size: clamp(19px, 2vw, 24px); line-height: 1.6; color: var(--fg-2); max-width: 36ch; font-weight: 500; }
 .grad { background: linear-gradient(90deg, #2a78d6 0%, #8a5cf0 50%, #eb6834 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
 /* scroll-linked text light-up (Apple style). Default = fully lit; JS drives --rp in both scroll directions. */
-.lit { --rp: 100%; background: linear-gradient(90deg, var(--fg) var(--rp), var(--mute) calc(var(--rp) + 12%)); -webkit-background-clip: text; background-clip: text; color: transparent; padding-bottom: .08em; }
+.lit { --rp: 100%; background: linear-gradient(90deg, var(--fg) var(--rp), var(--mute) calc(var(--rp) + 12%)); -webkit-background-clip: text; background-clip: text; color: transparent; padding-block: .06em .1em; }
 
 /* entrance/exit motion — replays every time an element crosses the viewport, scrolling down or up */
 .fx { transition: transform 1s var(--ease-out), opacity 1s var(--ease-out), filter 1s var(--ease-out); }
@@ -112,7 +114,7 @@ select:focus-visible, .pill:focus-visible, summary:focus-visible { outline: 2px 
 .specs, .trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 56px; }
 .spec { background: var(--card); border-radius: 26px; padding: 30px 26px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .trio .spec { background: var(--band); }
-.spec .v { font-size: clamp(38px, 4.8vw, 58px); font-weight: 700; letter-spacing: -0.04em; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.spec .v { font-size: clamp(36px, 4.6vw, 56px); font-weight: 700; letter-spacing: normal; line-height: 1.25; font-variant-numeric: tabular-nums; }
 .spec .k { font-size: 17px; font-weight: 600; }
 .spec .s { font-size: 14px; color: var(--fg-2); }
 .spec.hot .v { color: var(--orange); }
@@ -135,7 +137,7 @@ select:focus-visible, .pill:focus-visible, summary:focus-visible { outline: 2px 
 .layer.out { transform: scale(.9); }
 .layer .chart { width: 100%; height: 100%; }
 .lower { position: relative; display: block; width: fit-content; max-width: calc(100% - 36px); margin: 4px 18px 18px; background: rgba(29,29,31,.9); color: #fff;
-  border-radius: 14px; padding: 9px 14px; font-size: 14px; font-weight: 500; line-height: 1.35; transition: transform .55s var(--ease-out), opacity .4s; }
+  border-radius: 14px; padding: 9px 14px; font-size: 14px; font-weight: 500; line-height: 1.55; transition: transform .55s var(--ease-out), opacity .4s; }
 .lower:empty { display: none; }
 .lower.swap { transform: translateY(30%); opacity: 0; transition-duration: .25s; }
 .lower b { color: #ffb08f; font-weight: 600; }
@@ -149,10 +151,10 @@ select:focus-visible, .pill:focus-visible, summary:focus-visible { outline: 2px 
 .step.on { border-color: var(--orange); }
 .step.on > * { opacity: 1; transform: none; }
 .step.on > :nth-child(2) { transition-delay: .07s; } .step.on > :nth-child(3) { transition-delay: .14s; }
-.step .n { font-size: clamp(44px, 5.2vw, 64px); font-weight: 700; letter-spacing: -0.045em; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.step .n { font-size: clamp(42px, 5vw, 60px); font-weight: 700; letter-spacing: normal; line-height: 1.25; font-variant-numeric: tabular-nums; }
 .step .n.o { color: var(--orange); } .step .n.b { color: var(--blue); }
-.step h3 { font-size: 22px; font-weight: 600; margin-top: 6px; letter-spacing: -0.02em; }
-.step p { font-size: 16px; color: var(--fg-2); margin-top: 8px; line-height: 1.55; }
+.step h3 { font-size: 22px; font-weight: 600; margin-top: 6px; }
+.step p { font-size: 16px; color: var(--fg-2); margin-top: 8px; line-height: 1.7; }
 .no-io .step > * { opacity: 1; transform: none; }
 
 /* ---------- callout / playbook */
@@ -163,8 +165,8 @@ select:focus-visible, .pill:focus-visible, summary:focus-visible { outline: 2px 
 .plays { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 28px; }
 .play { background: var(--band); border-radius: 26px; padding: 30px 26px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .play .when { font-size: 14px; font-weight: 600; color: var(--orange); }
-.play h3 { font-size: 24px; letter-spacing: -0.025em; }
-.play p { color: var(--fg-2); font-size: 16px; line-height: 1.55; }
+.play h3 { font-size: 24px; }
+.play p { color: var(--fg-2); font-size: 16px; line-height: 1.7; }
 .timeline { margin-top: 56px; }
 .timeline svg { width: 100%; height: 84px; display: block; overflow: visible; }
 .timeline .draw { stroke-dasharray: 1000; stroke-dashoffset: 1000; transition: stroke-dashoffset 1.6s var(--ease); }
@@ -464,9 +466,9 @@ footer { padding-block: 28px 56px; border-top: 1px solid var(--hair); font-size:
       const pts = g.cdf.map((v, i) => [i * 3, v]);
       const ok = g.p50 != null, xmax = p50 ? 180 : 360;
       const marks = [];
-      if (!full && ok) marks.push({ coord: [g.p50, 50], name: `50% · ${g.p50} วัน`, itemStyle: { color: "#fff", borderColor: tail ? C.fg3 : C.orange, borderWidth: 3 }, label: { position: "top" } });
+      if (!full && ok) marks.push({ coord: [g.p50, 50], name: `50% · ${g.p50} วัน`, itemStyle: { color: "#fff", borderColor: tail ? C.fg3 : C.orange, borderWidth: 3 }, label: { position: "right", distance: 12 } });
       if (tail && g.p75 != null) marks.push({ coord: [g.p75, 75], name: `75% · ${g.p75} วัน`, itemStyle: { color: "#fff", borderColor: C.orange, borderWidth: 3 }, label: { position: "left", distance: 10 } });
-      return { ...A, grid: { left: 52, right: 26, top: 40, bottom: 50 },
+      return { ...A, grid: { left: 52, right: 26, top: tail ? 52 : 40, bottom: 50 },
         tooltip: { ...tip, trigger: "axis", formatter: ps => `<b>ภายใน ${ps[0].value[0]} วัน</b><br>กลับมาแล้ว ${fmt(ps[0].value[1], 1)}% ของคนที่ซื้อซ้ำ` },
         xAxis: { type: "value", min: 0, max: xmax, interval: p50 ? 30 : 60, axisLabel: ax, axisLine, splitLine: { show: false }, ...xName("วันหลังซื้อครั้งแรก") },
         yAxis: { type: "value", min: 0, max: 100, interval: 25, axisLabel: { ...ax, formatter: v => v + "%" }, splitLine: split },
@@ -474,8 +476,8 @@ footer { padding-block: 28px 56px; border-top: 1px solid var(--hair); font-size:
           markPoint: { symbol: "circle", symbolSize: 14, label: { show: true, distance: 10, color: C.fg, fontWeight: 600, fontSize: 13, fontFamily: C.font, formatter: p => p.name }, data: marks },
           markLine: { silent: true, symbol: "none", lineStyle: { type: [4, 4], color: C.fg3 }, label: { show: false }, data: !full && ok ? [[{ coord: [g.p50, 0] }, { coord: [g.p50, 50] }], [{ coord: [0, 50] }, { coord: [g.p50, 50] }]] : [] },
           markArea: { silent: true, itemStyle: { color: "rgba(235,104,52,.12)", borderColor: C.orange, borderWidth: 1, borderType: [4, 4] },
-            label: { show: true, position: "insideTopLeft", distance: 8, color: C.orange, fontWeight: 600, fontSize: 12.5, lineHeight: 17, fontFamily: C.font },
-            data: tail && g.p75 != null ? [[{ coord: [g.p75, 75], name: `อีก 25% ยังไม่กลับมา\nทยอยมาหลังวันที่ ${g.p75}` }, { coord: [360, 100] }]] : [] } }] };
+            label: { show: true, position: "top", distance: 4, color: C.orange, fontWeight: 600, fontSize: NARROW() ? 11.5 : 12.5, lineHeight: NARROW() ? 16 : 18, fontFamily: C.font },   // above the box: the curve runs through its inside
+            data: tail && g.p75 != null ? [[{ coord: [g.p75, 75], name: NARROW() ? `อีก 25%\nมาหลังวันที่ ${g.p75}` : `อีก 25% ยังไม่กลับมา\nทยอยมาหลังวันที่ ${g.p75}` }, { coord: [360, 100] }]] : [] } }] };
     },
     volume(d, mode) {
       // returning: zoom to the last 11 months and un-stack, so the orange repeat-purchase bars are big enough to read
@@ -502,7 +504,9 @@ footer { padding-block: 28px 56px; border-top: 1px solid var(--hair); font-size:
         series: [{ type: "line", data: m.late_pct, smooth: .25, symbol: "circle", symbolSize: 7, lineStyle: { width: 3, color: C.orange }, itemStyle: { color: C.orange, borderColor: "#fff", borderWidth: 2 }, areaStyle: { color: grad("235,104,52", .25) },
           markPoint: { symbol: "circle", symbolSize: 12, itemStyle: { color: "#fff", borderColor: C.orange, borderWidth: 3 },
             label: { show: true, position: "top", distance: 8, color: C.fg, fontWeight: 600, fontSize: 12.5, fontFamily: C.font, formatter: p => p.name },
-            data: peaks.map(i => ({ coord: [i, m.late_pct[i]], name: `${lbl[i]} · ${fmt(m.late_pct[i], 1)}%` })) } }] };
+            // a peak whose neighbour is higher gets its label on the far side, so the text doesn't sit on the line
+            data: peaks.map(i => { const l = m.late_pct[i - 1] ?? 0, r = m.late_pct[i + 1] ?? 0, side = r > m.late_pct[i] ? "left" : l > m.late_pct[i] ? "right" : "top";
+              return { coord: [i, m.late_pct[i]], name: side === "top" ? `${lbl[i]} · ${fmt(m.late_pct[i], 1)}%` : `${lbl[i]}\n${fmt(m.late_pct[i], 1)}%`, label: { position: side, distance: 10, align: side === "left" ? "right" : side === "right" ? "left" : "center", lineHeight: 17 } }; }) } }] };
     },
     review(d, mode) {
       // full → mark: the axis zooms into Sep 2017 – May 2018 so both dips fill the frame
@@ -514,10 +518,15 @@ footer { padding-block: 28px 56px; border-top: 1px solid var(--hair); font-size:
       const areas = i0 >= 0 && i1 >= 0 ? [[{ xAxis: i0, name: narrow && !zoom ? "" : "Black Friday" }, { xAxis: i0 + 1 }], [{ xAxis: i1, name: narrow && !zoom ? "ส่งช้า" : "ส่งช้าพุ่ง" }, { xAxis: i1 + 1 }]] : [];
       return { ...A, grid: { left: 52, right: 18, top: 44, bottom: 40 },
         tooltip: { ...tip, trigger: "axis", formatter: ps => { const i = ps[0].dataIndex; return `<b>${lbl[i]}</b><br>รีวิวเฉลี่ย ${fmt(m.avg_review[i], 2)}★<br>ส่งช้า ${fmt(m.late_pct[i], 1)}%`; } },
-        xAxis: { type: "category", data: lbl, boundaryGap: false, min: zoom ? Math.max(0, i0 - 2) : 0, max: zoom ? Math.min(n - 1, i1 + 3) : n - 1, axisLabel: { ...ax, interval: zoom ? 0 : (NARROW() ? 3 : 2) }, axisLine, axisTick: { show: false } },
-        yAxis: { type: "value", min: lo, max: hi, interval: .1, axisLabel: { ...ax, formatter: v => v.toFixed(1) + "★" }, splitLine: split },
-        series: [{ type: "line", data: m.avg_review, smooth: .25, symbol: "circle", symbolSize: zoom ? 10 : 7, lineStyle: { width: zoom ? 4 : 3, color: C.blue }, itemStyle: { color: C.blue, borderColor: "#fff", borderWidth: 2 },
-          label: lab({ show: zoom, position: "bottom", distance: 8, fontSize: 12, formatter: x => fmt(x.value, 2) }),
+        xAxis: { type: "category", data: lbl, boundaryGap: false, min: zoom ? Math.max(0, i0 - 2) : 0, max: zoom ? Math.min(n - 1, i1 + 3) : n - 1, axisLabel: { ...ax, interval: zoom ? (NARROW() ? 1 : 0) : (NARROW() ? 3 : 2) }, axisLine, axisTick: { show: false } },
+        yAxis: { type: "value", min: lo, max: hi, interval: NARROW() ? .2 : .1, axisLabel: { ...ax, formatter: v => v.toFixed(1) + "★" }, splitLine: split },
+        series: [{ type: "line", smooth: .25, symbol: "circle", symbolSize: zoom ? 10 : 7, lineStyle: { width: zoom ? 4 : 3, color: C.blue }, itemStyle: { color: C.blue, borderColor: "#fff", borderWidth: 2 },
+          // in the zoomed view label each month above or below the line (local highs above, lows below);
+          // on phones only the two dips, otherwise neighbouring labels collide
+          data: m.avg_review.map((v, i) => { const a = m.avg_review[i - 1] ?? v, b = m.avg_review[i + 1] ?? v, low = v <= (a + b) / 2;
+            const isDip = v != null && v < a && v < b, inView = i >= i0 - 2 && i <= i1 + 3;
+            return { value: v, label: { show: zoom && inView && (!narrow || isDip), position: low ? "bottom" : "top" } }; }),
+          label: lab({ show: false, distance: 8, fontSize: 12, formatter: x => fmt(x.value, 2) }),
           markArea: { silent: true, itemStyle: { color: "rgba(235,104,52,.12)" }, label: { show: true, position: "insideTop", distance: 6, color: C.orange, fontWeight: 600, fontSize: 12, fontFamily: C.font }, data: areas } }] };
     },
     seg(d) {
@@ -552,7 +561,7 @@ footer { padding-block: 28px 56px; border-top: 1px solid var(--hair); font-size:
             markPoint: { symbol: "rect", symbolSize: 0, label: { show: true, color: C.fg3, fontSize: 11.5, fontFamily: C.font, formatter: "เส้นที่ทุกคนจ่ายเท่ากัน" }, data: zoom ? [] : [{ coord: [72, 64] }] } },
           { type: "line", data: pts, showSymbol: false, smooth: .2, lineStyle: { width: 3, color: C.orange }, z: 2, areaStyle: { color: grad("235,104,52", .18) },
             markPoint: { symbol: "circle", symbolSize: 14, itemStyle: { color: "#fff", borderColor: C.orange, borderWidth: 3 },
-              label: { show: true, position: zoom ? "right" : "top", distance: 10, color: C.fg, fontSize: 13, fontWeight: 600, fontFamily: C.font, formatter: `top 10% → ${fmt(top, 0)}%` }, data: [{ coord: [10, top] }] } },
+              label: { show: true, position: "right", distance: 10, color: C.fg, fontSize: 13, fontWeight: 600, fontFamily: C.font, formatter: `top 10% → ${fmt(top, 0)}%` }, data: [{ coord: [10, top] }] } },
         ] };
     },
     delay(d, mode) {
@@ -567,12 +576,12 @@ footer { padding-block: 28px 56px; border-top: 1px solid var(--hair); font-size:
     },
     scatter() {
       const rows = D.state_table, maxC = Math.max(...rows.map(r => r.customers));
-      const show = new Set([...rows].sort((a, b) => b.customers - a.customers).slice(0, 4).map(x => x.state)
+      const show = new Set([...rows].sort((a, b) => b.customers - a.customers).slice(0, NARROW() ? 2 : 4).map(x => x.state)   // fewer name tags on phones: the big cluster overlaps
         .concat([...rows].sort((a, b) => b.late_pct - a.late_pct).slice(0, 3).map(x => x.state)).concat([cur]));
       return { ...A, grid: { left: 50, right: 30, top: 30, bottom: 48 },
         tooltip: { ...tip, trigger: "item", formatter: x => { const s = rows[x.dataIndex]; return `<b>${s.state} · ${ST[s.state] || ""}</b><br>ส่งช้า ${fmt(s.late_pct, 1)}% · รีวิว ${fmt(s.avg_review, 2)}★<br>ลูกค้า ${fmt(s.customers)} คน · ซื้อซ้ำ ${fmt(s.repeat_rate, 1)}%<br><span style="color:${C.fg2}">คลิกเพื่อกรองรัฐนี้</span>`; } },
         xAxis: { type: "value", min: 0, axisLabel: { ...ax, formatter: v => v + "%" }, axisLine, splitLine: split, ...xName("% ออเดอร์ที่ส่งช้า") },
-        yAxis: { type: "value", min: v => Math.floor(v.min * 10) / 10 - .05, max: v => Math.ceil(v.max * 10) / 10 + .05, axisLabel: { ...ax, formatter: v => v.toFixed(1) + "★" }, splitLine: split },
+        yAxis: { type: "value", min: v => Math.floor(v.min * 10 - .5) / 10, max: v => Math.ceil(v.max * 10 + .5) / 10, interval: NARROW() ? .2 : .1, axisLabel: { ...ax, formatter: v => v.toFixed(1) + "★" }, splitLine: split },
         series: [{ type: "scatter", cursor: "pointer", animationDelay: i => i * 25, emphasis: { scale: 1.25 },
           data: rows.map(s => ({ value: [s.late_pct, s.avg_review], name: s.state, symbolSize: 8 + 34 * Math.sqrt(s.customers / maxC),
             itemStyle: { color: s.state === cur ? C.orange : "rgba(42,120,214,.55)", borderColor: "#fff", borderWidth: 2 },
