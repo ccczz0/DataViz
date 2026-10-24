@@ -72,7 +72,8 @@ section { padding-block: clamp(72px, 11vw, 140px); }
 .hero .kicker { font-size: 14px; color: var(--fg-2); font-weight: 500; }
 .hero h1 { font-size: clamp(44px, 7.6vw, 88px); font-weight: 700; line-height: 1.05; letter-spacing: -0.035em; }
 .hero-stat { font-weight: 700; font-size: clamp(110px, 22vw, 260px); line-height: .95; letter-spacing: -0.055em; transform: scale(calc(1 - var(--hp, 0) * .18)) translateY(calc(var(--hp, 0) * 30px)); will-change: transform; }
-.hero .lead { text-align: center; max-width: 30ch; }
+.hero .lead { text-align: center; max-width: none; }
+@media (min-width: 700px) { .hero .lead { white-space: nowrap; } }   /* one line on laptop/iPad; phones still wrap */
 .dots { width: 100%; max-width: 1000px; margin-top: 28px; transform: translateY(calc(var(--hp, 0) * -40px)) scale(calc(1 + var(--hp, 0) * .06)); }
 #dotfield { width: 100%; aspect-ratio: 50 / 20; display: block; max-width: 100%; }
 .dot-key { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 22px; font-size: 14px; color: var(--fg-2); margin-top: 14px; }
@@ -617,7 +618,7 @@ footer { padding-block: 28px 56px; border-top: 1px solid var(--hair); font-size:
     q3: { title: "Q3", layers: ["delay", "scatter", "revRepeat"], steps: d => { const bd = d.q3.by_delay, br = d.q3.by_review; return [
       { layer: "delay", mode: "all", cam: [1, 50, 50], n: fmt(bd[0].avg_review, 1) + "★", c: "b", h: "เมื่อส่งก่อนกำหนด", p: "ออเดอร์ส่วนใหญ่ถึงก่อนวันที่สัญญาไว้ และได้รีวิวเฉลี่ยเกิน 4 ดาว", cap: `ส่งก่อนกำหนด รีวิว <b>${fmt(bd[0].avg_review, 1)}★</b>` },
       { layer: "delay", mode: "late", n: fmt(bd[4].low_review_pct, 0) + "%", c: "o", h: "ได้ 1–2 ดาวเมื่อส่งช้า 8+ วัน", p: `ดูสองแท่งสีส้ม แค่ช้า 1–7 วันรีวิวก็ร่วงเหลือ ${fmt(bd[3].avg_review, 1)} ดาว ถ้าช้าเกิน 8 วันเหลือ ${fmt(bd[4].avg_review, 1)} ดาว`, cap: `ช้า 8+ วัน → <b>${fmt(bd[4].avg_review, 1)}★</b>` },
-      { layer: "scatter", cam: [1, 50, 50], n: "r = " + fmt(corr, 2), c: "o", h: "เป็นแบบนี้ทุกรัฐ", p: "แต่ละวงคือหนึ่งรัฐ (ใหญ่ = ลูกค้าเยอะ) รัฐที่ส่งช้าบ่อยอย่าง AL และ MA ได้รีวิวต่ำกว่าเพื่อน คลิกวงไหนก็ได้เพื่อกรองทั้งหน้าเป็นรัฐนั้น", cap: "รัฐที่ส่งช้าบ่อย <b>รีวิวต่ำกว่า</b>" },
+      { layer: "scatter", cam: [1, 50, 50], n: "r = " + fmt(corr, 2), c: "o", h: "แนวโน้มเดียวกันเกือบทุกรัฐ", p: "แต่ละวงคือหนึ่งรัฐ (ใหญ่ = ลูกค้าเยอะ) รัฐที่ส่งช้าบ่อยอย่าง AL และ MA ได้รีวิวต่ำกว่าเพื่อน คลิกวงไหนก็ได้เพื่อกรองทั้งหน้าเป็นรัฐนั้น", cap: "รัฐที่ส่งช้าบ่อย <b>รีวิวต่ำกว่า</b>" },
       { layer: "revRepeat", cam: [1, 50, 50], n: fmt(br[0].repeat_pct, 1) + "% vs " + fmt(br[4].repeat_pct, 1) + "%", c: "b", h: "รีวิวอย่างเดียวทำนายการกลับมาได้ไม่ดี", p: "คนที่ให้ 1 ดาวกับ 5 ดาวกลับมาซื้อในอัตราใกล้กัน เพราะอัตราซื้อซ้ำต่ำมากทุกกลุ่ม สัญญาณที่ควรใช้จึงเป็นการส่งช้าที่รู้ล่วงหน้าได้ ไม่ใช่การรอดูรีวิว", cap: "แก้ที่ <b>การส่งช้า</b> ก่อนรีวิวจะมา" },
     ]; } },
   };
